@@ -3,6 +3,13 @@ import { streamText } from 'ai';
 
 export const maxDuration = 60;
 
+function formatNumber(n: number): string {
+    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + 'B';
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+    return n.toString();
+}
+
 export async function POST(req: Request) {
     const { messages, data } = await req.json();
 
@@ -19,34 +26,54 @@ export async function POST(req: Request) {
         ? knowledge.map((k: any) => `### ${k.title}\n${k.content}`).join('\n\n')
         : '(No hay información de negocio cargada aún.)';
 
-    // Build own socials block with real API data
+    // Build own socials block with profile stats AND individual posts
     let ownSocialsBlock = '';
     if (ownSocials.tiktok || ownSocials.instagram) {
-        ownSocialsBlock = '\n===== YOUR OWN SOCIAL MEDIA PROFILES =====\n';
+        ownSocialsBlock = '\n===== YOUR OWN SOCIAL MEDIA PROFILES (REAL DATA) =====\n';
+        ownSocialsBlock += 'You have REAL, LIVE data about this user\'s social media accounts. Use it to answer their questions accurately.\n\n';
+
         if (ownSocials.tiktok) {
-            ownSocialsBlock += `TikTok: @${ownSocials.tiktok.replace('@', '')}`;
+            ownSocialsBlock += `## TikTok: @${ownSocials.tiktok.replace('@', '')}\n`;
             if (ownSocials.data?.tiktokFollowers) {
-                ownSocialsBlock += ` | Followers: ${Number(ownSocials.data.tiktokFollowers).toLocaleString()}`;
+                ownSocialsBlock += `Followers: ${formatNumber(ownSocials.data.tiktokFollowers)} | Total Likes: ${formatNumber(ownSocials.data.tiktokLikes || 0)} | Videos: ${ownSocials.data.tiktokVideos || 0}\n`;
             }
-            if (ownSocials.data?.tiktokLikes) {
-                ownSocialsBlock += ` | Total Likes: ${Number(ownSocials.data.tiktokLikes).toLocaleString()}`;
-            }
-            if (ownSocials.data?.tiktokVideos) {
-                ownSocialsBlock += ` | Videos: ${ownSocials.data.tiktokVideos}`;
+
+            // Individual TikTok videos
+            const tiktokPosts = ownSocials.data?.tiktokPostsList || [];
+            if (tiktokPosts.length > 0) {
+                ownSocialsBlock += `\n### TikTok Videos (${tiktokPosts.length} total, sorted by views):\n`;
+                tiktokPosts.slice(0, 20).forEach((p: any, i: number) => {
+                    ownSocialsBlock += `${i + 1}. 📹 "${p.caption || 'Sin título'}" — ${formatNumber(p.views)} views, ${formatNumber(p.likes)} likes, ${formatNumber(p.comments)} comments`;
+                    if (p.url) ownSocialsBlock += ` | URL: ${p.url}`;
+                    if (p.timestamp) ownSocialsBlock += ` | ${new Date(p.timestamp).toLocaleDateString('es-LA')}`;
+                    ownSocialsBlock += '\n';
+                });
             }
             ownSocialsBlock += '\n';
         }
+
         if (ownSocials.instagram) {
-            ownSocialsBlock += `Instagram: @${ownSocials.instagram.replace('@', '')}`;
+            ownSocialsBlock += `## Instagram: @${ownSocials.instagram.replace('@', '')}\n`;
             if (ownSocials.data?.instagramFollowers) {
-                ownSocialsBlock += ` | Followers: ${Number(ownSocials.data.instagramFollowers).toLocaleString()}`;
+                ownSocialsBlock += `Followers: ${formatNumber(ownSocials.data.instagramFollowers)} | Posts: ${ownSocials.data.instagramPosts || 0}\n`;
             }
-            if (ownSocials.data?.instagramPosts) {
-                ownSocialsBlock += ` | Posts: ${ownSocials.data.instagramPosts}`;
+
+            // Individual Instagram posts
+            const instagramPosts = ownSocials.data?.instagramPostsList || [];
+            if (instagramPosts.length > 0) {
+                ownSocialsBlock += `\n### Instagram Posts (${instagramPosts.length} total, sorted by engagement):\n`;
+                instagramPosts.slice(0, 20).forEach((p: any, i: number) => {
+                    const type = p.isVideo ? '📹' : '🖼️';
+                    ownSocialsBlock += `${i + 1}. ${type} "${p.caption || 'Sin caption'}" — ${formatNumber(p.views)} ${p.isVideo ? 'views' : 'likes'}, ❤️ ${formatNumber(p.likes)}, 💬 ${formatNumber(p.comments)}`;
+                    if (p.url) ownSocialsBlock += ` | URL: ${p.url}`;
+                    if (p.timestamp) ownSocialsBlock += ` | ${new Date(p.timestamp).toLocaleDateString('es-LA')}`;
+                    ownSocialsBlock += '\n';
+                });
             }
             ownSocialsBlock += '\n';
         }
-        ownSocialsBlock += '\nUse this data when the user asks about THEIR OWN accounts, stats, or performance. You have REAL data about their profiles.\n';
+
+        ownSocialsBlock += `IMPORTANT: When the user asks about THEIR most viral video/post, use the data above to identify it. Also analyze the caption/script of the top performing content and explain WHY it went viral. You CAN answer questions about their specific content because you have real data.\n`;
     }
 
     const systemPrompt = `You are HOOKLAB Script Engine — an elite-tier content strategist, screenwriter, and viral growth hacker specialized in the financial trading niche (Forex, Crypto, Day Trading). You operate at the level of the top 0.1% of content creators globally.
@@ -120,7 +147,8 @@ You can also:
 4. Build "Content Series" frameworks (Part 1, 2, 3 cliffhanger structures).
 5. Suggest posting schedules and caption strategies.
 6. Create "Gancho Narrativo" libraries organized by emotional trigger.
-7. Report on the user's OWN social media stats when asked.
+7. Identify the user's most viral video/post from their REAL data and analyze its success patterns.
+8. Generate improved scripts based on patterns from the user's top-performing content.
 
 IMPORTANT: Never produce generic, obvious, or surface-level content. Your output must be specific enough that ${accountName} could record it IMMEDIATELY without any additional creative thinking. You are the creative brain. Be obsessively detailed.`;
 

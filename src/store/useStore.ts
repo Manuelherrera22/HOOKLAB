@@ -2,6 +2,18 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase';
 
+export interface PostData {
+    id: string;
+    caption: string;
+    likes: number;
+    comments: number;
+    views: number;
+    url: string;
+    platform: 'tiktok' | 'instagram';
+    timestamp?: string;
+    isVideo?: boolean;
+}
+
 export interface OwnSocialData {
     tiktokFollowers?: number;
     tiktokLikes?: number;
@@ -9,6 +21,9 @@ export interface OwnSocialData {
     tiktokNickname?: string;
     instagramFollowers?: number;
     instagramPosts?: number;
+    // Individual post data
+    tiktokPostsList?: PostData[];
+    instagramPostsList?: PostData[];
 }
 
 export interface User {
@@ -66,7 +81,6 @@ export const useStore = create<StoreState>()(
             knowledge: [],
 
             login: async (email) => {
-                // Lookup by email
                 let { data: account } = await supabase
                     .from('accounts')
                     .select('*')
@@ -74,8 +88,7 @@ export const useStore = create<StoreState>()(
                     .maybeSingle();
 
                 if (!account) {
-                    // Create new account with email
-                    const name = email.split('@')[0]; // Default name from email
+                    const name = email.split('@')[0];
                     const { data: newAccount } = await supabase
                         .from('accounts')
                         .insert([{ email: email.toLowerCase().trim(), name, niche: 'Trading' }])
@@ -132,10 +145,10 @@ export const useStore = create<StoreState>()(
                     .update({ own_tiktok: tiktok, own_instagram: instagram })
                     .eq('id', userId);
 
-                // Fetch profile data from APIs
+                // Fetch profile stats from extract-url API
                 let ownSocialData: OwnSocialData = {};
 
-                // Fetch TikTok data
+                // Fetch TikTok profile stats
                 if (tiktok.trim()) {
                     try {
                         const username = tiktok.replace('@', '').trim();
@@ -156,7 +169,7 @@ export const useStore = create<StoreState>()(
                     }
                 }
 
-                // Fetch Instagram data
+                // Fetch Instagram profile stats
                 if (instagram.trim()) {
                     try {
                         const username = instagram.replace('@', '').trim();
@@ -173,6 +186,25 @@ export const useStore = create<StoreState>()(
                     } catch (e) {
                         console.error('Failed to fetch own Instagram data:', e);
                     }
+                }
+
+                // Fetch individual posts/videos from both platforms
+                try {
+                    const postsRes = await fetch('/api/fetch-own-data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tiktok: tiktok.trim() || undefined,
+                            instagram: instagram.trim() || undefined,
+                        }),
+                    });
+                    const postsData = await postsRes.json();
+                    if (postsData.success) {
+                        ownSocialData.tiktokPostsList = postsData.tiktokPosts || [];
+                        ownSocialData.instagramPostsList = postsData.instagramPosts || [];
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch own posts:', e);
                 }
 
                 // Save social data to DB
@@ -229,17 +261,11 @@ export const useStore = create<StoreState>()(
                     if (data.error) throw new Error(data.error);
 
                     await get().addReference({
-                        refName,
-                        url,
-                        name: data.title,
-                        platform: data.platform,
-                        views: data.views,
-                        thumbnail: data.thumbnail,
-                        author: data.author,
-                        followers: data.followers,
-                        likes: data.likes,
-                        videoCount: data.videoCount,
-                        isProfile: data.isProfile,
+                        refName, url,
+                        name: data.title, platform: data.platform, views: data.views,
+                        thumbnail: data.thumbnail, author: data.author,
+                        followers: data.followers, likes: data.likes,
+                        videoCount: data.videoCount, isProfile: data.isProfile,
                     });
                 } catch (error) {
                     console.error('Failed to extract URL:', error);
