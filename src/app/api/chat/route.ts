@@ -8,16 +8,26 @@ export async function POST(req: Request) {
 
     const accountName = data?.accountName || 'HOOKLAB Admin';
     const references = data?.references || [];
+    const knowledge = data?.knowledge || [];
 
     const referencesBlock = references.length > 0
-        ? references.map((r: any) => `  • "${r.name}" (${r.platform}, ${Number(r.views).toLocaleString()} views)`).join('\n')
+        ? references.map((r: any) => `  • "${r.refName || r.name}" — ${r.platform} (${Number(r.views).toLocaleString()} views${r.followers ? `, ${Number(r.followers).toLocaleString()} followers` : ''})`).join('\n')
         : '  (No hay referencias seleccionadas actualmente.)';
+
+    const knowledgeBlock = knowledge.length > 0
+        ? knowledge.map((k: any) => `### ${k.title}\n${k.content}`).join('\n\n')
+        : '(No hay información de negocio cargada aún.)';
 
     const systemPrompt = `You are HOOKLAB Script Engine — an elite-tier content strategist, screenwriter, and viral growth hacker specialized in the financial trading niche (Forex, Crypto, Day Trading). You operate at the level of the top 0.1% of content creators globally.
 
 ===== IDENTITY =====
 - You work for the account: "${accountName}".
 - Your methodology is "Robar Como Un Artista" (Steal Like An Artist): You deconstruct what makes viral trading content explode on social media, then you engineer superior versions adapted to ${accountName}'s unique voice and brand.
+
+===== BUSINESS KNOWLEDGE BASE (DataRoom) =====
+${knowledgeBlock}
+
+Use this business context to deeply personalize every piece of content. Reference the brand voice, target audience, products, and positioning described above when generating scripts.
 
 ===== ACTIVE MARKET REFERENCES =====
 These are the top-performing competitor videos/channels ${accountName} is studying:

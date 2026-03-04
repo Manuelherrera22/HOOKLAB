@@ -1,16 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase';
-import { calculateHookScore } from '@/lib/hookScoring';
 
 export interface User {
     id: string;
     name: string;
     niche: string;
+    ownTiktok?: string;
+    ownInstagram?: string;
 }
 
 export interface Reference {
     id: string;
+    refName: string;
     url: string;
     name: string;
     platform: 'youtube' | 'tiktok' | 'instagram' | 'other';
@@ -23,36 +25,26 @@ export interface Reference {
     isProfile?: boolean;
 }
 
-export interface Hook {
+export interface KnowledgeEntry {
     id: string;
     title: string;
     content: string;
-    category: string;
-    matchScore: number;
-}
-
-export interface ViewSnapshot {
-    id: string;
-    reference_id: string;
-    views: number;
-    captured_at: string;
+    createdAt: string;
 }
 
 interface StoreState {
     user: User | null;
     references: Reference[];
-    hooks: Hook[];
-    viewSnapshots: ViewSnapshot[];
+    knowledge: KnowledgeEntry[];
     login: (name: string) => Promise<void>;
     logout: () => void;
+    updateOwnSocials: (tiktok: string, instagram: string) => Promise<void>;
     addReference: (ref: Omit<Reference, 'id'>) => Promise<void>;
-    addReferenceFromUrl: (url: string) => Promise<void>;
+    addReferenceFromUrl: (url: string, refName: string) => Promise<void>;
     removeReference: (id: string) => Promise<void>;
     refreshReferenceViews: (id: string) => Promise<void>;
-    addHook: (hook: Omit<Hook, 'id' | 'matchScore'> & { matchScore?: number }) => Promise<void>;
-    removeHook: (id: string) => Promise<void>;
-    captureViewSnapshots: () => Promise<void>;
-    fetchViewSnapshots: () => Promise<void>;
+    addKnowledge: (entry: Omit<KnowledgeEntry, 'id' | 'createdAt'>) => Promise<void>;
+    removeKnowledge: (id: string) => Promise<void>;
 }
 
 export const useStore = create<StoreState>()(
@@ -60,17 +52,16 @@ export const useStore = create<StoreState>()(
         (set, get) => ({
             user: null,
             references: [],
-            hooks: [],
-            viewSnapshots: [],
+            knowledge: [],
 
             login: async (name) => {
-                let { data: account, error } = await supabase
+                let { data: account } = await supabase
                     .from('accounts')
                     .select('*')
                     .eq('name', name)
                     .maybeSingle();
 
-                if (error || !account) {
+                if (!account) {
                     const { data: newAccount } = await supabase
                         .from('accounts')
                         .insert([{ name, niche: 'Trading' }])
@@ -85,34 +76,52 @@ export const useStore = create<StoreState>()(
                         .select('*')
                         .eq('account_id', account.id);
 
-                    const { data: hooksData } = await supabase
-                        .from('hooks')
+                    const { data: knowledgeData } = await supabase
+                        .from('knowledge_entries')
                         .select('*')
-                        .eq('account_id', account.id);
+                        .eq('account_id', account.id)
+                        .order('created_at', { ascending: false });
 
                     set({
-                        user: { id: account.id, name: account.name, niche: account.niche },
+                        user: {
+                            id: account.id, name: account.name, niche: account.niche,
+                            ownTiktok: account.own_tiktok || '', ownInstagram: account.own_instagram || ''
+                        },
                         references: refsData?.map(r => ({
-                            id: r.id, name: r.name, url: r.url, platform: r.platform, views: r.views,
+                            id: r.id, refName: r.ref_name || '', name: r.name, url: r.url,
+                            platform: r.platform, views: r.views,
                             thumbnail: r.thumbnail, author: r.author,
-                            followers: r.followers, likes: r.likes, videoCount: r.video_count, isProfile: r.is_profile
+                            followers: r.followers, likes: r.likes,
+                            videoCount: r.video_count, isProfile: r.is_profile
                         })) || [],
-                        hooks: hooksData?.map(h => ({
-                            id: h.id, title: h.title, content: h.content, category: h.category, matchScore: h.match_score
+                        knowledge: knowledgeData?.map(k => ({
+                            id: k.id, title: k.title, content: k.content, createdAt: k.created_at
                         })) || []
                     });
                 }
             },
 
-            logout: () => set({ user: null, references: [], hooks: [], viewSnapshots: [] }),
+            logout: () => set({ user: null, references: [], knowledge: [] }),
+
+            updateOwnSocials: async (tiktok, instagram) => {
+                const userId = get().user?.id;
+                if (!userId) return;
+                await supabase
+                    .from('accounts')
+                    .update({ own_tiktok: tiktok, own_instagram: instagram })
+                    .eq('id', userId);
+                set((state) => ({
+                    user: state.user ? { ...state.user, ownTiktok: tiktok, ownInstagram: instagram } : null
+                }));
+            },
 
             addReference: async (ref) => {
                 const userId = get().user?.id;
                 if (!userId) return;
-                const { data, error } = await supabase
+                const { data } = await supabase
                     .from('market_references')
                     .insert([{
-                        account_id: userId, name: ref.name, url: ref.url,
+                        account_id: userId, ref_name: ref.refName, name: ref.name, url: ref.url,
                         platform: ref.platform, views: ref.views,
                         thumbnail: ref.thumbnail, author: ref.author,
                         followers: ref.followers || 0, likes: ref.likes || 0,
@@ -123,7 +132,7 @@ export const useStore = create<StoreState>()(
                 if (data) {
                     set((state) => ({
                         references: [...state.references, {
-                            id: data.id, name: data.name, url: data.url,
+                            id: data.id, refName: data.ref_name || '', name: data.name, url: data.url,
                             platform: data.platform, views: data.views,
                             thumbnail: data.thumbnail, author: data.author,
                             followers: data.followers, likes: data.likes,
@@ -133,7 +142,7 @@ export const useStore = create<StoreState>()(
                 }
             },
 
-            addReferenceFromUrl: async (url: string) => {
+            addReferenceFromUrl: async (url: string, refName: string) => {
                 try {
                     const response = await fetch('/api/extract-url', {
                         method: 'POST',
@@ -144,34 +153,31 @@ export const useStore = create<StoreState>()(
                     if (data.error) throw new Error(data.error);
 
                     await get().addReference({
+                        refName,
                         url,
                         name: data.title,
                         platform: data.platform,
                         views: data.views,
                         thumbnail: data.thumbnail,
                         author: data.author,
+                        followers: data.followers,
+                        likes: data.likes,
+                        videoCount: data.videoCount,
+                        isProfile: data.isProfile,
                     });
                 } catch (error) {
                     console.error('Failed to extract URL:', error);
-                    // Fallback: add with basic info
                     const platform = url.includes('youtube') || url.includes('youtu.be') ? 'youtube' as const
                         : url.includes('tiktok') ? 'tiktok' as const
                             : url.includes('instagram') ? 'instagram' as const
                                 : 'other' as const;
-                    await get().addReference({
-                        url,
-                        name: new URL(url).hostname,
-                        platform,
-                        views: 0,
-                    });
+                    await get().addReference({ refName, url, name: new URL(url).hostname, platform, views: 0 });
                 }
             },
 
             removeReference: async (id) => {
-                const { error } = await supabase.from('market_references').delete().eq('id', id);
-                if (!error) {
-                    set((state) => ({ references: state.references.filter((r) => r.id !== id) }));
-                }
+                await supabase.from('market_references').delete().eq('id', id);
+                set((state) => ({ references: state.references.filter((r) => r.id !== id) }));
             },
 
             refreshReferenceViews: async (id: string) => {
@@ -188,12 +194,12 @@ export const useStore = create<StoreState>()(
 
                     await supabase
                         .from('market_references')
-                        .update({ views: data.views, name: data.title })
+                        .update({ views: data.views, name: data.title, followers: data.followers || 0, likes: data.likes || 0 })
                         .eq('id', id);
 
                     set((state) => ({
                         references: state.references.map(r =>
-                            r.id === id ? { ...r, views: data.views, name: data.title } : r
+                            r.id === id ? { ...r, views: data.views, name: data.title, followers: data.followers, likes: data.likes } : r
                         )
                     }));
                 } catch (error) {
@@ -201,60 +207,26 @@ export const useStore = create<StoreState>()(
                 }
             },
 
-            addHook: async (hook) => {
+            addKnowledge: async (entry) => {
                 const userId = get().user?.id;
                 if (!userId) return;
-
-                // Calculate real score
-                const scoreResult = calculateHookScore(hook.title, hook.content);
-                const matchScore = hook.matchScore ?? scoreResult.total;
-
-                const { data, error } = await supabase
-                    .from('hooks')
-                    .insert([{ account_id: userId, title: hook.title, content: hook.content, category: hook.category, match_score: matchScore }])
+                const { data } = await supabase
+                    .from('knowledge_entries')
+                    .insert([{ account_id: userId, title: entry.title, content: entry.content }])
                     .select('*')
                     .single();
                 if (data) {
                     set((state) => ({
-                        hooks: [...state.hooks, { id: data.id, title: data.title, content: data.content, category: data.category, matchScore: data.match_score }]
+                        knowledge: [{ id: data.id, title: data.title, content: data.content, createdAt: data.created_at }, ...state.knowledge]
                     }));
                 }
             },
 
-            removeHook: async (id) => {
-                const { error } = await supabase.from('hooks').delete().eq('id', id);
-                if (!error) {
-                    set((state) => ({ hooks: state.hooks.filter((h) => h.id !== id) }));
-                }
-            },
-
-            captureViewSnapshots: async () => {
-                const refs = get().references;
-                const snapshots = refs.map(ref => ({
-                    reference_id: ref.id,
-                    views: ref.views,
-                    captured_at: new Date().toISOString(),
-                }));
-                if (snapshots.length > 0) {
-                    await supabase.from('view_snapshots').insert(snapshots);
-                }
-            },
-
-            fetchViewSnapshots: async () => {
-                const refIds = get().references.map(r => r.id);
-                if (refIds.length === 0) return;
-                const { data } = await supabase
-                    .from('view_snapshots')
-                    .select('*')
-                    .in('reference_id', refIds)
-                    .order('captured_at', { ascending: true });
-                if (data) {
-                    set({ viewSnapshots: data });
-                }
+            removeKnowledge: async (id) => {
+                await supabase.from('knowledge_entries').delete().eq('id', id);
+                set((state) => ({ knowledge: state.knowledge.filter((k) => k.id !== id) }));
             },
         }),
-        {
-            name: 'hooklab-storage',
-        }
+        { name: 'hooklab-storage' }
     )
 );
