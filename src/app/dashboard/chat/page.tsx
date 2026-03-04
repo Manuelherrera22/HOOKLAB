@@ -61,10 +61,10 @@ export default function ChatPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)] space-y-4">
+        <div className="flex flex-col h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] space-y-3 md:space-y-4">
             {/* Context Panel */}
-            <div className="bg-neutral-900/60 border border-neutral-800 rounded-2xl p-4 flex flex-wrap items-center justify-between shrink-0 shadow-sm backdrop-blur-md gap-4">
-                <div className="flex items-center space-x-6">
+            <div className="bg-neutral-900/60 border border-neutral-800 rounded-2xl p-3 md:p-4 flex flex-col md:flex-row flex-wrap items-start md:items-center justify-between shrink-0 shadow-sm backdrop-blur-md gap-3 md:gap-4">
+                <div className="flex items-center space-x-3 md:space-x-6 flex-wrap gap-2">
                     <div className="flex items-center space-x-2">
                         <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Account</span>
                         <div className="flex items-center space-x-2 px-3 py-1.5 bg-neutral-800 rounded-lg">
@@ -82,7 +82,7 @@ export default function ChatPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 md:space-x-4 w-full md:w-auto overflow-x-auto">
                     <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Active References</span>
                     <div className="flex flex-wrap gap-2">
                         {references.map(ref => {
@@ -110,8 +110,8 @@ export default function ChatPage() {
             <div className="flex-1 bg-card border border-border rounded-2xl p-6 overflow-y-auto space-y-6">
                 {messages.map((msg, i) => (
                     <div key={msg.id || i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`flex max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                            <div className={`shrink-0 flex items-start justify-center w-8 h-8 rounded-full mt-1 ${msg.role === 'user' ? 'bg-neutral-700 ml-3' : 'bg-white mr-3'}`}>
+                        <div className={`flex max-w-[95%] md:max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <div className={`shrink-0 hidden sm:flex items-start justify-center w-8 h-8 rounded-full mt-1 ${msg.role === 'user' ? 'bg-neutral-700 ml-3' : 'bg-white mr-3'}`}>
                                 {msg.role === 'user' ? <UserIcon className="w-4 h-4 text-white mt-2" /> : <Bot className="w-5 h-5 text-black mt-1.5" />}
                             </div>
                             <div className="flex flex-col">

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bot, Home, Video, LineChart, Library, LogOut } from "lucide-react";
+import { Bot, Home, Video, LineChart, Library, LogOut, Menu, X } from "lucide-react";
 import { useStore } from "@/store/useStore";
+import { useState, useEffect } from "react";
 
 const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },
@@ -18,22 +19,46 @@ export function Sidebar() {
     const router = useRouter();
     const logout = useStore((state) => state.logout);
     const user = useStore((state) => state.user);
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Close sidebar on route change (mobile)
+    useEffect(() => {
+        setIsOpen(false);
+    }, [pathname]);
+
+    // Close on escape
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setIsOpen(false);
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, []);
 
     const handleLogout = () => {
         logout();
         router.push("/");
     };
 
-    return (
-        <div className="flex flex-col w-64 bg-card border-r border-border min-h-screen p-4 space-y-8">
-            <div className="flex items-center space-x-3 px-2">
-                <div className="p-2 bg-neutral-900 rounded-lg border border-neutral-800">
-                    <Bot className="w-6 h-6 text-white" />
+    const sidebarContent = (
+        <>
+            <div className="flex items-center justify-between px-2">
+                <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-neutral-900 rounded-lg border border-neutral-800">
+                        <Bot className="w-6 h-6 text-white" />
+                    </div>
+                    <span className="text-xl font-bold tracking-tight text-white">HOOKLAB</span>
                 </div>
-                <span className="text-xl font-bold tracking-tight text-white">HOOKLAB</span>
+                {/* Close button - mobile only */}
+                <button
+                    onClick={() => setIsOpen(false)}
+                    className="lg:hidden p-2 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors"
+                >
+                    <X className="w-5 h-5" />
+                </button>
             </div>
 
-            <div className="flex-1 space-y-1">
+            <div className="flex-1 space-y-1 mt-8">
                 {navigation.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -67,6 +92,45 @@ export function Sidebar() {
                     <span className="font-medium">Logout</span>
                 </button>
             </div>
-        </div>
+        </>
+    );
+
+    return (
+        <>
+            {/* Mobile top bar */}
+            <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                    <div className="p-1.5 bg-neutral-900 rounded-lg border border-neutral-800">
+                        <Bot className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-lg font-bold tracking-tight text-white">HOOKLAB</span>
+                </div>
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="p-2 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors"
+                >
+                    <Menu className="w-6 h-6" />
+                </button>
+            </div>
+
+            {/* Mobile overlay */}
+            {isOpen && (
+                <div
+                    className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+                    onClick={() => setIsOpen(false)}
+                />
+            )}
+
+            {/* Mobile sidebar drawer */}
+            <div className={`lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-card border-r border-border p-4 flex flex-col transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}>
+                {sidebarContent}
+            </div>
+
+            {/* Desktop sidebar */}
+            <div className="hidden lg:flex flex-col w-64 bg-card border-r border-border min-h-screen p-4 shrink-0">
+                {sidebarContent}
+            </div>
+        </>
     );
 }

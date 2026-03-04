@@ -52,7 +52,7 @@ export default function ReferencesPage() {
             </div>
 
             {/* URL Input */}
-            <form onSubmit={handleAddRef} className="flex items-center space-x-4">
+            <form onSubmit={handleAddRef} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                 <div className="flex-1 relative">
                     <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
                     <input
@@ -89,7 +89,7 @@ export default function ReferencesPage() {
                     const p = platformIcons[ref.platform] || platformIcons.other;
                     return (
                         <div key={ref.id} className="bg-card border border-border rounded-2xl p-5 group hover:border-neutral-600 transition-colors">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                 <div className="flex items-center space-x-4 flex-1 min-w-0">
                                     {/* Platform Badge */}
                                     <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-xl border ${p.color}`}>
@@ -113,7 +113,7 @@ export default function ReferencesPage() {
                                 </div>
 
                                 {/* Views + Actions */}
-                                <div className="flex items-center space-x-6 shrink-0">
+                                <div className="flex items-center space-x-4 sm:space-x-6 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
                                     <div className="text-right">
                                         <p className="text-2xl font-bold text-white">{new Intl.NumberFormat('en-US').format(ref.views)}</p>
                                         <p className="text-xs text-neutral-500">views</p>
