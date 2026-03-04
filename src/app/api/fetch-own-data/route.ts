@@ -89,7 +89,7 @@ async function fetchInstagramPosts(username: string): Promise<PostData[]> {
                 caption: caption.substring(0, 300),
                 likes,
                 comments,
-                views: isVideo ? views : likes, // For images, use likes as engagement metric
+                views: isVideo ? (views > 0 ? views : likes) : likes, // Instagram often returns 0 views, use likes as fallback
                 url: shortcode ? `https://www.instagram.com/p/${shortcode}/` : '',
                 thumbnail: node?.thumbnail_src || node?.display_url || node?.image_versions2?.candidates?.[0]?.url || '',
                 platform: 'instagram' as const,
@@ -100,7 +100,12 @@ async function fetchInstagramPosts(username: string): Promise<PostData[]> {
                         : undefined,
                 isVideo,
             };
-        }).sort((a: PostData, b: PostData) => b.views - a.views); // Sort by engagement descending
+        }).sort((a: PostData, b: PostData) => {
+            // Sort by total engagement: likes + comments (more reliable than views on Instagram)
+            const engA = a.likes + a.comments;
+            const engB = b.likes + b.comments;
+            return engB - engA;
+        }); // Sort by engagement descending
     } catch (error) {
         console.error('Instagram posts fetch error:', error);
         return [];

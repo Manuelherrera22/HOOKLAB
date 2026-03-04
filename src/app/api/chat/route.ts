@@ -61,10 +61,11 @@ export async function POST(req: Request) {
             // Individual Instagram posts
             const instagramPosts = ownSocials.data?.instagramPostsList || [];
             if (instagramPosts.length > 0) {
-                ownSocialsBlock += `\n### Instagram Posts (${instagramPosts.length} total, sorted by engagement):\n`;
+                ownSocialsBlock += `\n### Instagram Posts (${instagramPosts.length} total, sorted by engagement = likes + comments):\n`;
                 instagramPosts.slice(0, 20).forEach((p: any, i: number) => {
                     const type = p.isVideo ? '📹' : '🖼️';
-                    ownSocialsBlock += `${i + 1}. ${type} "${p.caption || 'Sin caption'}" — ${formatNumber(p.views)} ${p.isVideo ? 'views' : 'likes'}, ❤️ ${formatNumber(p.likes)}, 💬 ${formatNumber(p.comments)}`;
+                    const engagement = (p.likes || 0) + (p.comments || 0);
+                    ownSocialsBlock += `${i + 1}. ${type} "${p.caption || 'Sin caption'}" — ENGAGEMENT: ${formatNumber(engagement)} (❤️ ${formatNumber(p.likes)} likes, 💬 ${formatNumber(p.comments)} comments)`;
                     if (p.url) ownSocialsBlock += ` | URL: ${p.url}`;
                     if (p.timestamp) ownSocialsBlock += ` | ${new Date(p.timestamp).toLocaleDateString('es-LA')}`;
                     ownSocialsBlock += '\n';
