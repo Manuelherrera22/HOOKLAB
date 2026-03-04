@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '';
+
 interface ExtractedData {
     title: string;
     views: number;
     platform: 'youtube' | 'tiktok' | 'instagram' | 'other';
     thumbnail?: string;
     author?: string;
+    followers?: number;
+    likes?: number;
+    videoCount?: number;
+    isProfile?: boolean;
 }
 
 function detectPlatform(url: string): 'youtube' | 'tiktok' | 'instagram' | 'other' {
@@ -29,10 +35,10 @@ function extractYouTubeVideoId(url: string): string | null {
     return null;
 }
 
+// ===== YOUTUBE =====
 async function extractYouTube(url: string): Promise<ExtractedData> {
     const videoId = extractYouTubeVideoId(url);
 
-    // Fetch the page HTML to extract meta tags
     const response = await fetch(url, {
         headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -41,114 +47,196 @@ async function extractYouTube(url: string): Promise<ExtractedData> {
     });
     const html = await response.text();
 
-    // Extract title from <meta property="og:title">
     const titleMatch = html.match(/<meta\s+(?:property|name)="og:title"\s+content="([^"]+)"/i)
         || html.match(/<title>([^<]+)<\/title>/i);
     const title = titleMatch ? titleMatch[1].replace(' - YouTube', '').trim() : 'Unknown Video';
 
-    // Extract view count from the page
     let views = 0;
-    // Try interactionCount meta tag first
     const interactionMatch = html.match(/"interactionCount"\s*:\s*"?(\d+)"?/);
     if (interactionMatch) {
         views = parseInt(interactionMatch[1], 10);
     } else {
-        // Try viewCount from ytInitialPlayerResponse
         const viewCountMatch = html.match(/"viewCount"\s*:\s*"(\d+)"/);
-        if (viewCountMatch) {
-            views = parseInt(viewCountMatch[1], 10);
-        }
+        if (viewCountMatch) views = parseInt(viewCountMatch[1], 10);
     }
 
-    // Extract author
     const authorMatch = html.match(/"ownerChannelName"\s*:\s*"([^"]+)"/)
         || html.match(/<link\s+itemprop="name"\s+content="([^"]+)"/i);
     const author = authorMatch ? authorMatch[1] : undefined;
 
     return {
-        title,
-        views,
-        platform: 'youtube',
+        title, views, platform: 'youtube',
         thumbnail: videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : undefined,
         author,
     };
 }
 
-async function extractTikTok(url: string): Promise<ExtractedData> {
-    try {
-        const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
-        const response = await fetch(oembedUrl);
-        const data = await response.json();
+// ===== TIKTOK (RapidAPI) =====
+function extractTikTokUsername(url: string): string | null {
+    const match = url.match(/tiktok\.com\/@([^/?]+)/);
+    return match ? match[1] : null;
+}
 
-        // TikTok oEmbed gives title and author but not view count
-        // Try to fetch the page for view count
-        let views = 0;
-        try {
-            const pageRes = await fetch(url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                },
-            });
-            const html = await pageRes.text();
-            const viewMatch = html.match(/"playCount"\s*:\s*(\d+)/)
-                || html.match(/"statsV2"\s*:\s*\{[^}]*"playCount"\s*:\s*"?(\d+)"?/);
-            if (viewMatch) {
-                views = parseInt(viewMatch[1] || viewMatch[2], 10);
-            }
-        } catch {
-            // Fallback: no view count available
+function isTikTokVideoUrl(url: string): boolean {
+    return /tiktok\.com\/@[^/]+\/video\/\d+/.test(url) || /vm\.tiktok\.com/.test(url);
+}
+
+async function extractTikTokProfile(username: string): Promise<ExtractedData> {
+    const res = await fetch(`https://tiktok-api23.p.rapidapi.com/api/user/info?uniqueId=${username}`, {
+        headers: {
+            'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com',
+            'x-rapidapi-key': RAPIDAPI_KEY,
+        },
+    });
+    const data = await res.json();
+
+    if (data.userInfo) {
+        const user = data.userInfo.user;
+        const stats = data.userInfo.stats;
+        return {
+            title: user?.nickname || username,
+            author: `@${user?.uniqueId || username}`,
+            platform: 'tiktok',
+            views: stats?.heartCount > 0 ? stats.heartCount : (stats?.heart || 0),
+            followers: stats?.followerCount || 0,
+            likes: stats?.heart || 0,
+            videoCount: stats?.videoCount || 0,
+            thumbnail: user?.avatarLarger || user?.avatarMedium,
+            isProfile: true,
+        };
+    }
+
+    return { title: username, views: 0, platform: 'tiktok', author: `@${username}` };
+}
+
+async function extractTikTokVideo(url: string): Promise<ExtractedData> {
+    // Try oEmbed first for video-specific data
+    try {
+        const oembedRes = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
+        const oembed = await oembedRes.json();
+
+        // Also try the username for more stats
+        const username = extractTikTokUsername(url);
+        let profileStats = {};
+        if (username) {
+            try {
+                const profile = await extractTikTokProfile(username);
+                profileStats = { followers: profile.followers, likes: profile.likes, videoCount: profile.videoCount };
+            } catch { /* ignore */ }
         }
 
         return {
-            title: data.title || 'TikTok Video',
-            views,
+            title: oembed.title || 'TikTok Video',
+            author: oembed.author_name ? `@${oembed.author_name}` : undefined,
             platform: 'tiktok',
-            thumbnail: data.thumbnail_url,
-            author: data.author_name,
+            views: 0, // oEmbed doesn't give views for individual videos
+            thumbnail: oembed.thumbnail_url,
+            ...profileStats,
         };
     } catch {
         return { title: 'TikTok Video', views: 0, platform: 'tiktok' };
     }
 }
 
+async function extractTikTok(url: string): Promise<ExtractedData> {
+    const username = extractTikTokUsername(url);
+
+    if (username && !isTikTokVideoUrl(url)) {
+        // It's a profile URL like tiktok.com/@username
+        return extractTikTokProfile(username);
+    } else if (isTikTokVideoUrl(url)) {
+        return extractTikTokVideo(url);
+    } else if (username) {
+        return extractTikTokProfile(username);
+    }
+
+    return { title: 'TikTok', views: 0, platform: 'tiktok' };
+}
+
+// ===== INSTAGRAM (RapidAPI) =====
+function extractInstagramUsername(url: string): string | null {
+    // Match instagram.com/username or instagram.com/username/
+    const match = url.match(/instagram\.com\/([a-zA-Z0-9_.]+)\/?(?:\?|$|\/(?:p|reel|reels)?)/);
+    if (match && !['p', 'reel', 'reels', 'stories', 'explore'].includes(match[1])) {
+        return match[1];
+    }
+    // Also try simple profile URL
+    const simpleMatch = url.match(/instagram\.com\/([a-zA-Z0-9_.]+)\/?$/);
+    return simpleMatch ? simpleMatch[1] : null;
+}
+
 async function extractInstagram(url: string): Promise<ExtractedData> {
+    const username = extractInstagramUsername(url);
+
+    if (username) {
+        try {
+            // Get posts to calculate total engagement
+            const res = await fetch('https://instagram120.p.rapidapi.com/api/instagram/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-rapidapi-host': 'instagram120.p.rapidapi.com',
+                    'x-rapidapi-key': RAPIDAPI_KEY,
+                },
+                body: JSON.stringify({ username, maxId: '' }),
+            });
+            const data = await res.json();
+
+            const edges = data?.result?.edges || data?.items || [];
+            let totalLikes = 0;
+            let totalComments = 0;
+            let totalViews = 0;
+            let postCount = 0;
+
+            for (const edge of edges) {
+                const node = edge?.node || edge;
+                totalLikes += node?.like_count || node?.edge_media_preview_like?.count || 0;
+                totalComments += node?.comment_count || node?.edge_media_to_comment?.count || 0;
+                totalViews += node?.video_view_count || node?.view_count || 0;
+                postCount++;
+            }
+
+            const firstPost = edges[0]?.node || edges[0];
+            const profilePic = firstPost?.owner?.profile_pic_url;
+
+            return {
+                title: `@${username}`,
+                author: `@${username}`,
+                platform: 'instagram',
+                views: totalViews > 0 ? totalViews : totalLikes,
+                likes: totalLikes,
+                videoCount: postCount,
+                thumbnail: profilePic,
+                isProfile: true,
+            };
+        } catch (error) {
+            console.error('Instagram API error:', error);
+        }
+    }
+
+    // Fallback: scrape meta tags
     try {
         const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            },
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
         });
         const html = await response.text();
-
         const titleMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i);
-        const title = titleMatch ? titleMatch[1] : 'Instagram Post';
-
-        let views = 0;
-        const viewMatch = html.match(/"video_view_count"\s*:\s*(\d+)/);
-        if (viewMatch) {
-            views = parseInt(viewMatch[1], 10);
-        }
-
-        return { title, views, platform: 'instagram' };
+        return { title: titleMatch ? titleMatch[1] : `@${username || 'Instagram'}`, views: 0, platform: 'instagram' };
     } catch {
-        return { title: 'Instagram Post', views: 0, platform: 'instagram' };
+        return { title: `@${username || 'Instagram'}`, views: 0, platform: 'instagram' };
     }
 }
 
+// ===== GENERIC =====
 async function extractGeneric(url: string): Promise<ExtractedData> {
     try {
         const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            },
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
         });
         const html = await response.text();
-
         const titleMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i)
             || html.match(/<title>([^<]+)<\/title>/i);
-        const title = titleMatch ? titleMatch[1].trim() : new URL(url).hostname;
-
-        return { title, views: 0, platform: 'other' };
+        return { title: titleMatch ? titleMatch[1].trim() : new URL(url).hostname, views: 0, platform: 'other' };
     } catch {
         return { title: new URL(url).hostname, views: 0, platform: 'other' };
     }

@@ -17,6 +17,10 @@ export interface Reference {
     views: number;
     thumbnail?: string;
     author?: string;
+    followers?: number;
+    likes?: number;
+    videoCount?: number;
+    isProfile?: boolean;
 }
 
 export interface Hook {
@@ -64,7 +68,7 @@ export const useStore = create<StoreState>()(
                     .from('accounts')
                     .select('*')
                     .eq('name', name)
-                    .single();
+                    .maybeSingle();
 
                 if (error || !account) {
                     const { data: newAccount } = await supabase
@@ -90,7 +94,8 @@ export const useStore = create<StoreState>()(
                         user: { id: account.id, name: account.name, niche: account.niche },
                         references: refsData?.map(r => ({
                             id: r.id, name: r.name, url: r.url, platform: r.platform, views: r.views,
-                            thumbnail: r.thumbnail, author: r.author
+                            thumbnail: r.thumbnail, author: r.author,
+                            followers: r.followers, likes: r.likes, videoCount: r.video_count, isProfile: r.is_profile
                         })) || [],
                         hooks: hooksData?.map(h => ({
                             id: h.id, title: h.title, content: h.content, category: h.category, matchScore: h.match_score
@@ -109,7 +114,9 @@ export const useStore = create<StoreState>()(
                     .insert([{
                         account_id: userId, name: ref.name, url: ref.url,
                         platform: ref.platform, views: ref.views,
-                        thumbnail: ref.thumbnail, author: ref.author
+                        thumbnail: ref.thumbnail, author: ref.author,
+                        followers: ref.followers || 0, likes: ref.likes || 0,
+                        video_count: ref.videoCount || 0, is_profile: ref.isProfile || false
                     }])
                     .select('*')
                     .single();
@@ -118,7 +125,9 @@ export const useStore = create<StoreState>()(
                         references: [...state.references, {
                             id: data.id, name: data.name, url: data.url,
                             platform: data.platform, views: data.views,
-                            thumbnail: data.thumbnail, author: data.author
+                            thumbnail: data.thumbnail, author: data.author,
+                            followers: data.followers, likes: data.likes,
+                            videoCount: data.video_count, isProfile: data.is_profile
                         }]
                     }));
                 }

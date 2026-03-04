@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useStore } from "@/store/useStore";
-import { Link2, Plus, Trash2, ExternalLink, RefreshCw, Youtube, Loader2 } from "lucide-react";
+import { Link2, Plus, Trash2, ExternalLink, RefreshCw, Youtube, Loader2, Users, Heart, Film } from "lucide-react";
 
 export default function ReferencesPage() {
     const references = useStore(state => state.references);
@@ -44,11 +44,18 @@ export default function ReferencesPage() {
         other: { icon: '●', color: 'text-neutral-400 bg-neutral-500/10 border-neutral-500/20' },
     };
 
+    const formatNumber = (n: number) => {
+        if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + 'B';
+        if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+        if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+        return n.toString();
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Market References</h1>
-                <p className="text-neutral-400">Paste a YouTube, TikTok, or Instagram URL and we&apos;ll extract the title, views, and platform automatically.</p>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-2">Market References</h1>
+                <p className="text-neutral-400 text-sm md:text-base">Paste any YouTube, TikTok, or Instagram URL — we&apos;ll extract stats automatically via API.</p>
             </div>
 
             {/* URL Input */}
@@ -67,7 +74,7 @@ export default function ReferencesPage() {
                 <button
                     type="submit"
                     disabled={!url.trim() || isAdding}
-                    className="flex items-center space-x-2 bg-white text-black px-5 py-4 rounded-xl font-medium hover:bg-neutral-200 transition-colors disabled:opacity-50 shrink-0"
+                    className="flex items-center justify-center space-x-2 bg-white text-black px-5 py-4 rounded-xl font-medium hover:bg-neutral-200 transition-colors disabled:opacity-50 shrink-0"
                 >
                     {isAdding ? (
                         <>
@@ -87,8 +94,9 @@ export default function ReferencesPage() {
             <div className="space-y-4">
                 {references.map(ref => {
                     const p = platformIcons[ref.platform] || platformIcons.other;
+                    const hasProfileStats = ref.followers || ref.likes || ref.videoCount;
                     return (
-                        <div key={ref.id} className="bg-card border border-border rounded-2xl p-5 group hover:border-neutral-600 transition-colors">
+                        <div key={ref.id} className="bg-card border border-border rounded-2xl p-4 md:p-5 group hover:border-neutral-600 transition-colors">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                 <div className="flex items-center space-x-4 flex-1 min-w-0">
                                     {/* Platform Badge */}
@@ -99,7 +107,7 @@ export default function ReferencesPage() {
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
                                         <h3 className="text-white font-semibold truncate">{ref.name}</h3>
-                                        <div className="flex items-center space-x-3 mt-1">
+                                        <div className="flex items-center space-x-3 mt-1 flex-wrap gap-1">
                                             <span className="text-xs text-neutral-500 capitalize font-medium">{ref.platform}</span>
                                             {ref.author && (
                                                 <span className="text-xs text-neutral-500">• {ref.author}</span>
@@ -112,18 +120,43 @@ export default function ReferencesPage() {
                                     </div>
                                 </div>
 
-                                {/* Views + Actions */}
+                                {/* Stats + Actions */}
                                 <div className="flex items-center space-x-4 sm:space-x-6 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                                    {/* Profile Stats */}
+                                    {hasProfileStats && (
+                                        <div className="flex items-center space-x-4">
+                                            {ref.followers !== undefined && ref.followers > 0 && (
+                                                <div className="flex items-center space-x-1.5">
+                                                    <Users className="w-3.5 h-3.5 text-blue-400" />
+                                                    <span className="text-sm font-semibold text-white">{formatNumber(ref.followers)}</span>
+                                                </div>
+                                            )}
+                                            {ref.likes !== undefined && ref.likes > 0 && (
+                                                <div className="flex items-center space-x-1.5">
+                                                    <Heart className="w-3.5 h-3.5 text-red-400" />
+                                                    <span className="text-sm font-semibold text-white">{formatNumber(ref.likes)}</span>
+                                                </div>
+                                            )}
+                                            {ref.videoCount !== undefined && ref.videoCount > 0 && (
+                                                <div className="flex items-center space-x-1.5">
+                                                    <Film className="w-3.5 h-3.5 text-purple-400" />
+                                                    <span className="text-sm font-semibold text-white">{ref.videoCount}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Views */}
                                     <div className="text-right">
-                                        <p className="text-2xl font-bold text-white">{new Intl.NumberFormat('en-US').format(ref.views)}</p>
-                                        <p className="text-xs text-neutral-500">views</p>
+                                        <p className="text-xl md:text-2xl font-bold text-white">{formatNumber(ref.views)}</p>
+                                        <p className="text-xs text-neutral-500">{ref.isProfile ? 'total engagement' : 'views'}</p>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <button
                                             onClick={() => handleRefresh(ref.id)}
                                             disabled={refreshingId === ref.id}
                                             className="p-2 text-neutral-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                            title="Refresh views"
+                                            title="Refresh stats"
                                         >
                                             <RefreshCw className={`w-4 h-4 ${refreshingId === ref.id ? 'animate-spin' : ''}`} />
                                         </button>
@@ -146,7 +179,7 @@ export default function ReferencesPage() {
                         <Youtube className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-white mb-2">No references yet</h3>
                         <p className="text-neutral-500 text-sm max-w-md mx-auto">
-                            Paste a YouTube, TikTok, or Instagram URL above and we&apos;ll extract the video title, view count, and platform automatically.
+                            Paste a YouTube, TikTok profile, or Instagram URL above. We&apos;ll auto-extract followers, likes, views, and more via RapidAPI.
                         </p>
                     </div>
                 )}
