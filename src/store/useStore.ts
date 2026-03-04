@@ -58,10 +58,19 @@ export interface KnowledgeEntry {
     createdAt: string;
 }
 
+export interface ChatMessage {
+    id: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+}
+
 interface StoreState {
     user: User | null;
     references: Reference[];
     knowledge: KnowledgeEntry[];
+    chatMessages: ChatMessage[];
+    setChatMessages: (messages: ChatMessage[]) => void;
+    clearChatMessages: () => void;
     login: (email: string) => Promise<void>;
     logout: () => void;
     updateOwnSocials: (tiktok: string, instagram: string) => Promise<void>;
@@ -79,6 +88,10 @@ export const useStore = create<StoreState>()(
             user: null,
             references: [],
             knowledge: [],
+            chatMessages: [],
+
+            setChatMessages: (messages) => set({ chatMessages: messages }),
+            clearChatMessages: () => set({ chatMessages: [] }),
 
             login: async (email) => {
                 let { data: account } = await supabase
@@ -133,7 +146,7 @@ export const useStore = create<StoreState>()(
                 }
             },
 
-            logout: () => set({ user: null, references: [], knowledge: [] }),
+            logout: () => set({ user: null, references: [], knowledge: [], chatMessages: [] }),
 
             updateOwnSocials: async (tiktok, instagram) => {
                 const userId = get().user?.id;

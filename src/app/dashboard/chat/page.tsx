@@ -1,29 +1,37 @@
 "use client";
 
-import { useStore } from "@/store/useStore";
-import { useChat } from "ai/react";
-import { Bot, User as UserIcon, Send, Settings, Check, X, Sparkles } from "lucide-react";
-import { useRef, useEffect, useState } from "react";
+import { useStore, ChatMessage } from "@/store/useStore";
+import { useChat, Message } from "ai/react";
+import { Bot, User as UserIcon, Send, Settings, Check, X, Sparkles, Trash2 } from "lucide-react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 export default function ChatPage() {
     const user = useStore(state => state.user);
     const references = useStore(state => state.references);
     const knowledge = useStore(state => state.knowledge);
+    const storedMessages = useStore(state => state.chatMessages);
+    const setChatMessages = useStore(state => state.setChatMessages);
+    const clearChatMessages = useStore(state => state.clearChatMessages);
     const [selectedRefs, setSelectedRefs] = useState<string[]>(references.map(r => r.id));
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const activeReferences = references.filter(r => selectedRefs.includes(r.id));
 
-    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    const welcomeMessage: Message = {
+        id: 'welcome',
+        role: 'assistant',
+        content: `¡Hola ${user?.name}! Soy tu **HOOKLAB Script Engine**. Tengo acceso a tus referencias del nicho de trading, a toda tu base de conocimiento${user?.ownTiktok || user?.ownInstagram ? ' y a los datos de tus redes sociales' : ''}.\n\n¿Qué tipo de guion o estrategia de contenido quieres crear hoy?`
+    };
+
+    // Use stored messages if available, otherwise use welcome message
+    const initialMsgs: Message[] = storedMessages.length > 0
+        ? storedMessages.map(m => ({ id: m.id, role: m.role as Message['role'], content: m.content }))
+        : [welcomeMessage];
+
+    const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({
         api: '/api/chat',
-        initialMessages: [
-            {
-                id: '1',
-                role: 'assistant',
-                content: `¡Hola ${user?.name}! Soy tu **HOOKLAB Script Engine**. Tengo acceso a tus referencias del nicho de trading, a toda tu base de conocimiento${user?.ownTiktok || user?.ownInstagram ? ' y a los datos de tus redes sociales' : ''}.\n\n¿Qué tipo de guion o estrategia de contenido quieres crear hoy?`
-            }
-        ],
+        initialMessages: initialMsgs,
         body: {
             data: {
                 accountName: user?.name,
@@ -38,6 +46,18 @@ export default function ChatPage() {
         }
     });
 
+    // Save messages to store whenever they change (but not during loading/streaming)
+    useEffect(() => {
+        if (!isLoading && messages.length > 0) {
+            const toStore: ChatMessage[] = messages.map(m => ({
+                id: m.id,
+                role: m.role as ChatMessage['role'],
+                content: m.content,
+            }));
+            setChatMessages(toStore);
+        }
+    }, [messages, isLoading, setChatMessages]);
+
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, isLoading]);
@@ -49,6 +69,11 @@ export default function ChatPage() {
             setSelectedRefs(prev => [...prev, id]);
         }
     };
+
+    const handleClearChat = useCallback(() => {
+        clearChatMessages();
+        setMessages([welcomeMessage]);
+    }, [clearChatMessages, setMessages, welcomeMessage]);
 
     return (
         <div className="flex flex-col h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] space-y-3 md:space-y-4">
@@ -145,6 +170,14 @@ export default function ChatPage() {
                         placeholder="Describe the hook or script you want to create (e.g. 'Make it more aggressive', 'Hook de curiosidad para forex')"
                         className="flex-1 bg-transparent text-white placeholder-neutral-500 focus:outline-none text-sm"
                     />
+                    <button
+                        type="button"
+                        onClick={handleClearChat}
+                        title="New conversation"
+                        className="p-2 text-neutral-500 hover:text-red-400 rounded-xl hover:bg-neutral-800 transition-colors shrink-0"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
                     <button
                         type="submit"
                         disabled={isLoading || !input.trim()}
