@@ -58,7 +58,7 @@ export function Sidebar() {
                 {user && (
                     <div className="px-3 py-3 mb-2">
                         <p className="text-sm font-medium text-white line-clamp-1">{user.name}</p>
-                        <p className="text-xs text-neutral-500">Niche: {user.niche}</p>
+                        <p className="text-xs text-neutral-500 truncate">{user.email}</p>
                     </div>
                 )}
                 <button onClick={handleLogout} className="flex w-full items-center space-x-3 px-3 py-2.5 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-red-400 transition-colors">

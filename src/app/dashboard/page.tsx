@@ -43,6 +43,8 @@ export default function DashboardOverview() {
         setSavingSocials(false);
     };
 
+    const ownData = user?.ownSocialData;
+
     const handleAddReference = async () => {
         if (!refName.trim() || refUrls.every(u => !u.trim()) || addingRef) return;
         setAddingRef(true);
@@ -140,8 +142,33 @@ export default function DashboardOverview() {
                     className="mt-4 flex items-center space-x-2 px-4 py-2.5 bg-white text-black rounded-xl font-medium hover:bg-neutral-200 transition-colors disabled:opacity-50"
                 >
                     {savingSocials ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    <span>{savingSocials ? 'Saving...' : 'Save'}</span>
+                    <span>{savingSocials ? 'Connecting accounts...' : 'Save & Connect'}</span>
                 </button>
+
+                {/* Show fetched profile stats */}
+                {ownData && (ownData.tiktokFollowers || ownData.instagramFollowers) && (
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {ownData.tiktokFollowers !== undefined && ownData.tiktokFollowers > 0 && (
+                            <div className="bg-fuchsia-500/5 border border-fuchsia-500/20 rounded-xl p-3">
+                                <p className="text-xs text-fuchsia-400 font-semibold mb-1">♪ TikTok — {ownData.tiktokNickname || user?.ownTiktok}</p>
+                                <div className="flex items-center space-x-3 text-xs text-neutral-300">
+                                    <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-blue-400" /><span>{formatNumber(ownData.tiktokFollowers)}</span></span>
+                                    {ownData.tiktokLikes !== undefined && <span className="flex items-center space-x-1"><Heart className="w-3 h-3 text-red-400" /><span>{formatNumber(ownData.tiktokLikes)}</span></span>}
+                                    {ownData.tiktokVideos !== undefined && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-purple-400" /><span>{ownData.tiktokVideos} videos</span></span>}
+                                </div>
+                            </div>
+                        )}
+                        {ownData.instagramFollowers !== undefined && ownData.instagramFollowers > 0 && (
+                            <div className="bg-pink-500/5 border border-pink-500/20 rounded-xl p-3">
+                                <p className="text-xs text-pink-400 font-semibold mb-1">◎ Instagram — @{user?.ownInstagram?.replace('@', '')}</p>
+                                <div className="flex items-center space-x-3 text-xs text-neutral-300">
+                                    <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-blue-400" /><span>{formatNumber(ownData.instagramFollowers)}</span></span>
+                                    {ownData.instagramPosts !== undefined && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-purple-400" /><span>{ownData.instagramPosts} posts</span></span>}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </section>
 
             {/* ===== SECTION 2: REFERENCIAS ===== */}

@@ -2,12 +2,23 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase';
 
+export interface OwnSocialData {
+    tiktokFollowers?: number;
+    tiktokLikes?: number;
+    tiktokVideos?: number;
+    tiktokNickname?: string;
+    instagramFollowers?: number;
+    instagramPosts?: number;
+}
+
 export interface User {
     id: string;
     name: string;
+    email: string;
     niche: string;
     ownTiktok?: string;
     ownInstagram?: string;
+    ownSocialData?: OwnSocialData;
 }
 
 export interface Reference {
@@ -36,7 +47,7 @@ interface StoreState {
     user: User | null;
     references: Reference[];
     knowledge: KnowledgeEntry[];
-    login: (name: string) => Promise<void>;
+    login: (email: string) => Promise<void>;
     logout: () => void;
     updateOwnSocials: (tiktok: string, instagram: string) => Promise<void>;
     addReference: (ref: Omit<Reference, 'id'>) => Promise<void>;
@@ -54,17 +65,20 @@ export const useStore = create<StoreState>()(
             references: [],
             knowledge: [],
 
-            login: async (name) => {
+            login: async (email) => {
+                // Lookup by email
                 let { data: account } = await supabase
                     .from('accounts')
                     .select('*')
-                    .eq('name', name)
+                    .eq('email', email.toLowerCase().trim())
                     .maybeSingle();
 
                 if (!account) {
+                    // Create new account with email
+                    const name = email.split('@')[0]; // Default name from email
                     const { data: newAccount } = await supabase
                         .from('accounts')
-                        .insert([{ name, niche: 'Trading' }])
+                        .insert([{ email: email.toLowerCase().trim(), name, niche: 'Trading' }])
                         .select('*')
                         .single();
                     account = newAccount;
@@ -84,8 +98,13 @@ export const useStore = create<StoreState>()(
 
                     set({
                         user: {
-                            id: account.id, name: account.name, niche: account.niche,
-                            ownTiktok: account.own_tiktok || '', ownInstagram: account.own_instagram || ''
+                            id: account.id,
+                            name: account.name,
+                            email: account.email || '',
+                            niche: account.niche,
+                            ownTiktok: account.own_tiktok || '',
+                            ownInstagram: account.own_instagram || '',
+                            ownSocialData: account.own_social_data || undefined,
                         },
                         references: refsData?.map(r => ({
                             id: r.id, refName: r.ref_name || '', name: r.name, url: r.url,
@@ -106,12 +125,69 @@ export const useStore = create<StoreState>()(
             updateOwnSocials: async (tiktok, instagram) => {
                 const userId = get().user?.id;
                 if (!userId) return;
+
+                // Save usernames to DB
                 await supabase
                     .from('accounts')
                     .update({ own_tiktok: tiktok, own_instagram: instagram })
                     .eq('id', userId);
+
+                // Fetch profile data from APIs
+                let ownSocialData: OwnSocialData = {};
+
+                // Fetch TikTok data
+                if (tiktok.trim()) {
+                    try {
+                        const username = tiktok.replace('@', '').trim();
+                        const res = await fetch('/api/extract-url', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: `https://www.tiktok.com/@${username}` }),
+                        });
+                        const data = await res.json();
+                        if (!data.error) {
+                            ownSocialData.tiktokFollowers = data.followers || 0;
+                            ownSocialData.tiktokLikes = data.likes || 0;
+                            ownSocialData.tiktokVideos = data.videoCount || 0;
+                            ownSocialData.tiktokNickname = data.title || username;
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch own TikTok data:', e);
+                    }
+                }
+
+                // Fetch Instagram data
+                if (instagram.trim()) {
+                    try {
+                        const username = instagram.replace('@', '').trim();
+                        const res = await fetch('/api/extract-url', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: `https://www.instagram.com/${username}` }),
+                        });
+                        const data = await res.json();
+                        if (!data.error) {
+                            ownSocialData.instagramFollowers = data.followers || 0;
+                            ownSocialData.instagramPosts = data.videoCount || 0;
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch own Instagram data:', e);
+                    }
+                }
+
+                // Save social data to DB
+                await supabase
+                    .from('accounts')
+                    .update({ own_social_data: ownSocialData })
+                    .eq('id', userId);
+
                 set((state) => ({
-                    user: state.user ? { ...state.user, ownTiktok: tiktok, ownInstagram: instagram } : null
+                    user: state.user ? {
+                        ...state.user,
+                        ownTiktok: tiktok,
+                        ownInstagram: instagram,
+                        ownSocialData
+                    } : null
                 }));
             },
 

@@ -21,14 +21,19 @@ export default function ChatPage() {
             {
                 id: '1',
                 role: 'assistant',
-                content: `¡Hola ${user?.name}! Soy tu **HOOKLAB Script Engine**. Tengo acceso a tus referencias del nicho de trading y a toda tu base de conocimiento.\n\n¿Qué tipo de guion o estrategia de contenido quieres crear hoy?`
+                content: `¡Hola ${user?.name}! Soy tu **HOOKLAB Script Engine**. Tengo acceso a tus referencias del nicho de trading, a toda tu base de conocimiento${user?.ownTiktok || user?.ownInstagram ? ' y a los datos de tus redes sociales' : ''}.\n\n¿Qué tipo de guion o estrategia de contenido quieres crear hoy?`
             }
         ],
         body: {
             data: {
                 accountName: user?.name,
                 references: activeReferences,
-                knowledge: knowledge
+                knowledge: knowledge,
+                ownSocials: {
+                    tiktok: user?.ownTiktok || '',
+                    instagram: user?.ownInstagram || '',
+                    data: user?.ownSocialData || {}
+                }
             }
         }
     });

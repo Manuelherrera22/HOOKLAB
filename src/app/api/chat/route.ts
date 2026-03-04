@@ -9,6 +9,7 @@ export async function POST(req: Request) {
     const accountName = data?.accountName || 'HOOKLAB Admin';
     const references = data?.references || [];
     const knowledge = data?.knowledge || [];
+    const ownSocials = data?.ownSocials || {};
 
     const referencesBlock = references.length > 0
         ? references.map((r: any) => `  • "${r.refName || r.name}" — ${r.platform} (${Number(r.views).toLocaleString()} views${r.followers ? `, ${Number(r.followers).toLocaleString()} followers` : ''})`).join('\n')
@@ -18,12 +19,42 @@ export async function POST(req: Request) {
         ? knowledge.map((k: any) => `### ${k.title}\n${k.content}`).join('\n\n')
         : '(No hay información de negocio cargada aún.)';
 
+    // Build own socials block with real API data
+    let ownSocialsBlock = '';
+    if (ownSocials.tiktok || ownSocials.instagram) {
+        ownSocialsBlock = '\n===== YOUR OWN SOCIAL MEDIA PROFILES =====\n';
+        if (ownSocials.tiktok) {
+            ownSocialsBlock += `TikTok: @${ownSocials.tiktok.replace('@', '')}`;
+            if (ownSocials.data?.tiktokFollowers) {
+                ownSocialsBlock += ` | Followers: ${Number(ownSocials.data.tiktokFollowers).toLocaleString()}`;
+            }
+            if (ownSocials.data?.tiktokLikes) {
+                ownSocialsBlock += ` | Total Likes: ${Number(ownSocials.data.tiktokLikes).toLocaleString()}`;
+            }
+            if (ownSocials.data?.tiktokVideos) {
+                ownSocialsBlock += ` | Videos: ${ownSocials.data.tiktokVideos}`;
+            }
+            ownSocialsBlock += '\n';
+        }
+        if (ownSocials.instagram) {
+            ownSocialsBlock += `Instagram: @${ownSocials.instagram.replace('@', '')}`;
+            if (ownSocials.data?.instagramFollowers) {
+                ownSocialsBlock += ` | Followers: ${Number(ownSocials.data.instagramFollowers).toLocaleString()}`;
+            }
+            if (ownSocials.data?.instagramPosts) {
+                ownSocialsBlock += ` | Posts: ${ownSocials.data.instagramPosts}`;
+            }
+            ownSocialsBlock += '\n';
+        }
+        ownSocialsBlock += '\nUse this data when the user asks about THEIR OWN accounts, stats, or performance. You have REAL data about their profiles.\n';
+    }
+
     const systemPrompt = `You are HOOKLAB Script Engine — an elite-tier content strategist, screenwriter, and viral growth hacker specialized in the financial trading niche (Forex, Crypto, Day Trading). You operate at the level of the top 0.1% of content creators globally.
 
 ===== IDENTITY =====
 - You work for the account: "${accountName}".
 - Your methodology is "Robar Como Un Artista" (Steal Like An Artist): You deconstruct what makes viral trading content explode on social media, then you engineer superior versions adapted to ${accountName}'s unique voice and brand.
-
+${ownSocialsBlock}
 ===== BUSINESS KNOWLEDGE BASE (DataRoom) =====
 ${knowledgeBlock}
 
@@ -89,6 +120,7 @@ You can also:
 4. Build "Content Series" frameworks (Part 1, 2, 3 cliffhanger structures).
 5. Suggest posting schedules and caption strategies.
 6. Create "Gancho Narrativo" libraries organized by emotional trigger.
+7. Report on the user's OWN social media stats when asked.
 
 IMPORTANT: Never produce generic, obvious, or surface-level content. Your output must be specific enough that ${accountName} could record it IMMEDIATELY without any additional creative thinking. You are the creative brain. Be obsessively detailed.`;
 

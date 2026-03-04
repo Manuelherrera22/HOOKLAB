@@ -3,23 +3,33 @@
 import { useStore } from "@/store/useStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Bot } from "lucide-react";
+import { Bot, Mail } from "lucide-react";
 
 export default function LoginPage() {
-    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
     const login = useStore((state) => state.login);
     const router = useRouter();
 
+    const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (name.trim() && !isLoading) {
+        setError("");
+        if (!email.trim()) return;
+        if (!isValidEmail(email.trim())) {
+            setError("Please enter a valid email address");
+            return;
+        }
+        if (!isLoading) {
             setIsLoading(true);
             try {
-                await login(name);
+                await login(email);
                 router.push("/dashboard");
             } catch (error) {
                 console.error("Login failed:", error);
+                setError("Login failed. Please try again.");
             } finally {
                 setIsLoading(false);
             }
@@ -37,24 +47,29 @@ export default function LoginPage() {
                     </div>
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Access HOOKLAB</h1>
-                        <p className="text-neutral-400">Enter your account name to continue</p>
+                        <p className="text-neutral-400">Enter your email to access your workspace</p>
                     </div>
                 </div>
 
                 <form onSubmit={handleLogin} className="bg-card border border-border rounded-2xl p-8 shadow-2xl space-y-6">
                     <div className="space-y-2">
-                        <label htmlFor="name" className="text-sm font-medium text-neutral-300">
-                            Account Name
+                        <label htmlFor="email" className="text-sm font-medium text-neutral-300 flex items-center space-x-2">
+                            <Mail className="w-4 h-4" />
+                            <span>Email Address</span>
                         </label>
                         <input
-                            id="name"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => { setEmail(e.target.value); setError(""); }}
                             className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-                            placeholder="e.g. Master Trader"
+                            placeholder="your@email.com"
                             required
+                            autoComplete="email"
                         />
+                        {error && (
+                            <p className="text-red-400 text-xs mt-1">{error}</p>
+                        )}
                     </div>
 
                     <button
@@ -68,6 +83,10 @@ export default function LoginPage() {
                             "Enter Workspace"
                         )}
                     </button>
+
+                    <p className="text-center text-xs text-neutral-600">
+                        Your data is saved and linked to your email. You can access your workspace from any device.
+                    </p>
                 </form>
             </main>
         </div>

@@ -32,7 +32,9 @@ export async function POST() {
         // 2. Add columns to accounts
         await client.query(`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS own_tiktok TEXT DEFAULT ''`);
         await client.query(`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS own_instagram TEXT DEFAULT ''`);
-        results.push('accounts: own_tiktok, own_instagram added ✓');
+        await client.query(`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS email TEXT`);
+        await client.query(`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS own_social_data JSONB DEFAULT '{}'::jsonb`);
+        results.push('accounts: own_tiktok, own_instagram, email, own_social_data added ✓');
 
         // 3. Add columns to market_references
         await client.query(`ALTER TABLE market_references ADD COLUMN IF NOT EXISTS ref_name TEXT DEFAULT ''`);
@@ -41,6 +43,16 @@ export async function POST() {
         await client.query(`ALTER TABLE market_references ADD COLUMN IF NOT EXISTS video_count INT DEFAULT 0`);
         await client.query(`ALTER TABLE market_references ADD COLUMN IF NOT EXISTS is_profile BOOLEAN DEFAULT false`);
         results.push('market_references: ref_name, followers, likes, video_count, is_profile added ✓');
+
+        // 4. Create unique index on email (if not exists)
+        await client.query(`
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'accounts_email_unique') THEN
+                    CREATE UNIQUE INDEX accounts_email_unique ON accounts(email) WHERE email IS NOT NULL AND email != '';
+                END IF;
+            END $$;
+        `);
+        results.push('Email unique index created ✓');
 
         await client.end();
         results.push('ALL MIGRATIONS COMPLETE ✓');
