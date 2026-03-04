@@ -146,7 +146,9 @@ export const useStore = create<StoreState>()(
                     .eq('id', userId);
 
                 // Fetch profile stats from extract-url API
-                let ownSocialData: OwnSocialData = {};
+                // Start with existing data so API errors don't wipe previous results
+                const existingData = get().user?.ownSocialData || {};
+                let ownSocialData: OwnSocialData = { ...existingData };
 
                 // Fetch TikTok profile stats
                 if (tiktok.trim()) {

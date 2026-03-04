@@ -146,24 +146,37 @@ export default function DashboardOverview() {
                 </button>
 
                 {/* Show fetched profile stats */}
-                {ownData && (ownData.tiktokFollowers || ownData.instagramFollowers) && (
+                {ownData && (ownData.tiktokFollowers || ownData.tiktokNickname || ownData.instagramFollowers || ownData.instagramPostsList?.length || ownData.instagramPosts) && (
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {ownData.tiktokFollowers !== undefined && ownData.tiktokFollowers > 0 && (
+                        {(ownData.tiktokFollowers !== undefined && ownData.tiktokFollowers > 0 || ownData.tiktokNickname) && (
                             <div className="bg-fuchsia-500/5 border border-fuchsia-500/20 rounded-xl p-3">
                                 <p className="text-xs text-fuchsia-400 font-semibold mb-1">♪ TikTok — {ownData.tiktokNickname || user?.ownTiktok}</p>
                                 <div className="flex items-center space-x-3 text-xs text-neutral-300">
-                                    <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-blue-400" /><span>{formatNumber(ownData.tiktokFollowers)}</span></span>
+                                    <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-blue-400" /><span>{formatNumber(ownData.tiktokFollowers || 0)} followers</span></span>
                                     {ownData.tiktokLikes !== undefined && <span className="flex items-center space-x-1"><Heart className="w-3 h-3 text-red-400" /><span>{formatNumber(ownData.tiktokLikes)}</span></span>}
                                     {ownData.tiktokVideos !== undefined && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-purple-400" /><span>{ownData.tiktokVideos} videos</span></span>}
                                 </div>
                             </div>
                         )}
-                        {ownData.instagramFollowers !== undefined && ownData.instagramFollowers > 0 && (
+                        {(user?.ownInstagram) && (
                             <div className="bg-pink-500/5 border border-pink-500/20 rounded-xl p-3">
                                 <p className="text-xs text-pink-400 font-semibold mb-1">◎ Instagram — @{user?.ownInstagram?.replace('@', '')}</p>
                                 <div className="flex items-center space-x-3 text-xs text-neutral-300">
-                                    <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-blue-400" /><span>{formatNumber(ownData.instagramFollowers)}</span></span>
-                                    {ownData.instagramPosts !== undefined && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-purple-400" /><span>{ownData.instagramPosts} posts</span></span>}
+                                    {ownData.instagramFollowers !== undefined && ownData.instagramFollowers > 0 && (
+                                        <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-blue-400" /><span>{formatNumber(ownData.instagramFollowers)} followers</span></span>
+                                    )}
+                                    {(() => {
+                                        const posts = ownData.instagramPostsList || [];
+                                        const totalLikes = posts.reduce((sum: number, p: any) => sum + (p.likes || 0), 0);
+                                        const totalComments = posts.reduce((sum: number, p: any) => sum + (p.comments || 0), 0);
+                                        return (
+                                            <>
+                                                {posts.length > 0 && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-purple-400" /><span>{posts.length} posts</span></span>}
+                                                {totalLikes > 0 && <span className="flex items-center space-x-1"><Heart className="w-3 h-3 text-red-400" /><span>{formatNumber(totalLikes)} likes</span></span>}
+                                                {totalComments > 0 && <span className="text-amber-400">💬 {formatNumber(totalComments)}</span>}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         )}
