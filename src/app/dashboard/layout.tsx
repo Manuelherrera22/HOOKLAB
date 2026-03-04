@@ -12,19 +12,31 @@ export default function DashboardLayout({
 }) {
     const router = useRouter();
     const user = useStore((state) => state.user);
-    const [mounted, setMounted] = useState(false);
+    const [hydrated, setHydrated] = useState(false);
 
+    // Wait for Zustand to hydrate from localStorage before checking auth
     useEffect(() => {
-        setMounted(true);
-        if (!user) {
+        // Zustand persist rehydrates synchronously after first render
+        // We use a small delay to ensure the store is fully hydrated
+        const timer = setTimeout(() => setHydrated(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Only redirect after hydration is complete and user is confirmed null
+    useEffect(() => {
+        if (hydrated && !user) {
             router.replace("/login");
         }
-    }, [user, router]);
+    }, [hydrated, user, router]);
 
-    if (!mounted || !user) {
+    // Show loading spinner while hydrating or if user not yet confirmed
+    if (!hydrated || !user) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin"></div>
+                <div className="flex flex-col items-center space-y-4">
+                    <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white animate-spin"></div>
+                    <p className="text-neutral-500 text-sm animate-pulse">Loading workspace...</p>
+                </div>
             </div>
         );
     }
