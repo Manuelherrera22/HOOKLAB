@@ -122,6 +122,38 @@ export const useStore = create<StoreState>()(
                         .eq('account_id', account.id)
                         .order('created_at', { ascending: false });
 
+                    // Load previously scraped TikTok videos
+                    let ownSocialData = account.own_social_data || {};
+                    try {
+                        const { data: scrapedVideos } = await supabase
+                            .from('scraped_videos')
+                            .select('*')
+                            .eq('account_id', account.id)
+                            .eq('platform', 'tiktok')
+                            .order('views', { ascending: false });
+
+                        if (scrapedVideos && scrapedVideos.length > 0) {
+                            ownSocialData = {
+                                ...ownSocialData,
+                                tiktokPostsList: scrapedVideos.map((v: any) => ({
+                                    id: v.video_id,
+                                    caption: v.caption || '',
+                                    likes: v.likes || 0,
+                                    comments: v.comments || 0,
+                                    views: v.views || 0,
+                                    url: v.url || '',
+                                    thumbnail: v.thumbnail || '',
+                                    platform: 'tiktok' as const,
+                                    timestamp: v.timestamp,
+                                    isVideo: true,
+                                })),
+                            };
+                            console.log(`[Login] Loaded ${scrapedVideos.length} scraped TikTok videos`);
+                        }
+                    } catch (e) {
+                        console.log('No scraped videos table yet or error:', e);
+                    }
+
                     set({
                         user: {
                             id: account.id,
@@ -130,7 +162,7 @@ export const useStore = create<StoreState>()(
                             niche: account.niche,
                             ownTiktok: account.own_tiktok || '',
                             ownInstagram: account.own_instagram || '',
-                            ownSocialData: account.own_social_data || undefined,
+                            ownSocialData,
                         },
                         references: refsData?.map(r => ({
                             id: r.id, refName: r.ref_name || '', name: r.name, url: r.url,
@@ -158,17 +190,18 @@ export const useStore = create<StoreState>()(
                     .update({ own_tiktok: tiktok, own_instagram: instagram })
                     .eq('id', userId);
 
-                // Fetch profile stats from extract-url API
-                // Start with existing data so API errors don't wipe previous results
+                // Start with existing data so errors don't wipe previous results
                 const existingData = get().user?.ownSocialData || {};
                 let ownSocialData: OwnSocialData = { ...existingData };
 
-                // Fetch TikTok profile stats
+                // ===== TIKTOK: Use scrape mission system =====
                 if (tiktok.trim()) {
+                    const username = tiktok.replace('@', '').trim();
+
+                    // Try to get TikTok profile stats via extract-url (quick, sometimes works)
                     try {
-                        const username = tiktok.replace('@', '').trim();
                         const controller = new AbortController();
-                        const timeout = setTimeout(() => controller.abort(), 10000);
+                        const timeout = setTimeout(() => controller.abort(), 8000);
                         const res = await fetch('/api/extract-url', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -178,20 +211,94 @@ export const useStore = create<StoreState>()(
                         clearTimeout(timeout);
                         const data = await res.json();
                         if (!data.error) {
-                            ownSocialData.tiktokFollowers = data.followers || 0;
-                            ownSocialData.tiktokLikes = data.likes || 0;
-                            ownSocialData.tiktokVideos = data.videoCount || 0;
+                            ownSocialData.tiktokFollowers = data.followers || ownSocialData.tiktokFollowers || 0;
+                            ownSocialData.tiktokLikes = data.likes || ownSocialData.tiktokLikes || 0;
+                            ownSocialData.tiktokVideos = data.videoCount || ownSocialData.tiktokVideos || 0;
                             ownSocialData.tiktokNickname = data.title || username;
                         }
                     } catch (e) {
-                        console.error('Failed to fetch own TikTok data:', e);
+                        console.log('TikTok profile stats fetch skipped (timeout)');
+                    }
+
+                    // Create scrape mission for TikTok individual videos
+                    try {
+                        const missionRes = await fetch('/api/scrape-mission', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ accountId: userId, username, platform: 'tiktok' }),
+                        });
+                        const missionData = await missionRes.json();
+                        const missionId = missionData.missionId;
+
+                        if (missionId) {
+                            console.log(`[TikTok] Scrape mission created: ${missionId}`);
+
+                            // Poll for mission completion (max 60s)
+                            const maxWait = 60000;
+                            const pollInterval = 3000;
+                            const startTime = Date.now();
+
+                            while (Date.now() - startTime < maxWait) {
+                                await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+                                const statusRes = await fetch(`/api/scrape-mission?missionId=${missionId}`);
+                                const statusData = await statusRes.json();
+
+                                if (statusData.mission?.status === 'completed') {
+                                    console.log(`[TikTok] Mission completed! ${statusData.videos?.length || 0} videos`);
+                                    ownSocialData.tiktokPostsList = statusData.videos || [];
+                                    if (statusData.videos?.length > 0) {
+                                        ownSocialData.tiktokVideos = statusData.videos.length;
+                                    }
+                                    break;
+                                } else if (statusData.mission?.status === 'failed') {
+                                    console.error('[TikTok] Mission failed:', statusData.mission?.error);
+                                    break;
+                                }
+                                // Still running, continue polling
+                                console.log(`[TikTok] Mission status: ${statusData.mission?.status}...`);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('TikTok scrape mission error:', e);
+                    }
+
+                    // Fallback: load existing scraped videos from DB if mission didn't return any
+                    if (!ownSocialData.tiktokPostsList?.length) {
+                        try {
+                            const { data: videos } = await supabase
+                                .from('scraped_videos')
+                                .select('*')
+                                .eq('account_id', userId)
+                                .eq('platform', 'tiktok')
+                                .order('views', { ascending: false });
+
+                            if (videos && videos.length > 0) {
+                                ownSocialData.tiktokPostsList = videos.map((v: any) => ({
+                                    id: v.video_id,
+                                    caption: v.caption || '',
+                                    likes: v.likes || 0,
+                                    comments: v.comments || 0,
+                                    views: v.views || 0,
+                                    url: v.url || '',
+                                    thumbnail: v.thumbnail || '',
+                                    platform: 'tiktok' as const,
+                                    timestamp: v.timestamp,
+                                    isVideo: true,
+                                }));
+                                console.log(`[TikTok] Loaded ${videos.length} previously scraped videos from DB`);
+                            }
+                        } catch (e) {
+                            console.error('Failed to load scraped videos:', e);
+                        }
                     }
                 }
 
-                // Fetch Instagram profile stats
+                // ===== INSTAGRAM: Use fetch-own-data API (works reliably) =====
                 if (instagram.trim()) {
                     try {
                         const username = instagram.replace('@', '').trim();
+                        // Get profile stats
                         const res = await fetch('/api/extract-url', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -205,25 +312,21 @@ export const useStore = create<StoreState>()(
                     } catch (e) {
                         console.error('Failed to fetch own Instagram data:', e);
                     }
-                }
 
-                // Fetch individual posts/videos from both platforms
-                try {
-                    const postsRes = await fetch('/api/fetch-own-data', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            tiktok: tiktok.trim() || undefined,
-                            instagram: instagram.trim() || undefined,
-                        }),
-                    });
-                    const postsData = await postsRes.json();
-                    if (postsData.success) {
-                        ownSocialData.tiktokPostsList = postsData.tiktokPosts || [];
-                        ownSocialData.instagramPostsList = postsData.instagramPosts || [];
+                    // Get individual posts
+                    try {
+                        const postsRes = await fetch('/api/fetch-own-data', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ instagram: instagram.trim() }),
+                        });
+                        const postsData = await postsRes.json();
+                        if (postsData.success && postsData.instagramPosts?.length > 0) {
+                            ownSocialData.instagramPostsList = postsData.instagramPosts;
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch Instagram posts:', e);
                     }
-                } catch (e) {
-                    console.error('Failed to fetch own posts:', e);
                 }
 
                 // Save social data to DB
