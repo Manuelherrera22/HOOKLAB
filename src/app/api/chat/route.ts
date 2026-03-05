@@ -48,6 +48,11 @@ export async function POST(req: Request) {
                     if (p.timestamp) ownSocialsBlock += ` | ${new Date(p.timestamp).toLocaleDateString('es-LA')}`;
                     ownSocialsBlock += '\n';
                 });
+            } else if (ownSocials.data?.tiktokFollowers || ownSocials.data?.tiktokVideos) {
+                // Profile stats available but no individual videos
+                ownSocialsBlock += `\n### TikTok Videos: ⚠️ No se pudieron cargar los videos individuales de TikTok debido a restricciones del API.\n`;
+                ownSocialsBlock += `IMPORTANTE: Tienes los datos del perfil (${ownSocials.data.tiktokFollowers || 0} followers, ${ownSocials.data.tiktokLikes || 0} likes, ${ownSocials.data.tiktokVideos || 0} videos).\n`;
+                ownSocialsBlock += `Si el usuario te pide analizar un video viral de TikTok, pídele que pegue el enlace del video aquí en el chat y podrás analizarlo.\n`;
             }
             ownSocialsBlock += '\n';
         }
