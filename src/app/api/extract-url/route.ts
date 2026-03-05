@@ -82,28 +82,37 @@ function isTikTokVideoUrl(url: string): boolean {
 }
 
 async function extractTikTokProfile(username: string): Promise<ExtractedData> {
-    const res = await fetch(`https://tiktok-api23.p.rapidapi.com/api/user/info?uniqueId=${username}`, {
-        headers: {
-            'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com',
-            'x-rapidapi-key': RAPIDAPI_KEY,
-        },
-    });
-    const data = await res.json();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+        const res = await fetch(`https://tiktok-api23.p.rapidapi.com/api/user/info?uniqueId=${username}`, {
+            headers: {
+                'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com',
+                'x-rapidapi-key': RAPIDAPI_KEY,
+            },
+            signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        const data = await res.json();
 
-    if (data.userInfo) {
-        const user = data.userInfo.user;
-        const stats = data.userInfo.stats;
-        return {
-            title: user?.nickname || username,
-            author: `@${user?.uniqueId || username}`,
-            platform: 'tiktok',
-            views: stats?.heartCount > 0 ? stats.heartCount : (stats?.heart || 0),
-            followers: stats?.followerCount || 0,
-            likes: stats?.heart || 0,
-            videoCount: stats?.videoCount || 0,
-            thumbnail: user?.avatarLarger || user?.avatarMedium,
-            isProfile: true,
-        };
+        if (data.userInfo) {
+            const user = data.userInfo.user;
+            const stats = data.userInfo.stats;
+            return {
+                title: user?.nickname || username,
+                author: `@${user?.uniqueId || username}`,
+                platform: 'tiktok',
+                views: stats?.heartCount > 0 ? stats.heartCount : (stats?.heart || 0),
+                followers: stats?.followerCount || 0,
+                likes: stats?.heart || 0,
+                videoCount: stats?.videoCount || 0,
+                thumbnail: user?.avatarLarger || user?.avatarMedium,
+                isProfile: true,
+            };
+        }
+    } catch (error) {
+        clearTimeout(timeout);
+        console.error('TikTok profile fetch timed out or failed:', error);
     }
 
     return { title: username, views: 0, platform: 'tiktok', author: `@${username}` };
