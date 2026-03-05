@@ -15,30 +15,59 @@ export interface PostData {
     isVideo?: boolean;
 }
 
+// Helper: fetch with timeout
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number = 10000): Promise<Response> {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        throw error;
+    }
+}
+
 // ===== TIKTOK: Fetch user videos =====
 async function fetchTikTokVideos(username: string): Promise<PostData[]> {
     try {
-        // First get secUid from user info
-        const infoRes = await fetch(`https://tiktok-api23.p.rapidapi.com/api/user/info?uniqueId=${username}`, {
-            headers: {
-                'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com',
-                'x-rapidapi-key': RAPIDAPI_KEY,
+        // Step 1: Get secUid from user info (with 10s timeout)
+        const infoRes = await fetchWithTimeout(
+            `https://tiktok-api23.p.rapidapi.com/api/user/info?uniqueId=${username}`,
+            {
+                headers: {
+                    'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com',
+                    'x-rapidapi-key': RAPIDAPI_KEY,
+                },
             },
-        });
+            10000
+        );
         const infoData = await infoRes.json();
         const secUid = infoData?.userInfo?.user?.secUid;
-        if (!secUid) return [];
+        if (!secUid) {
+            console.log('TikTok: No secUid found for', username);
+            return [];
+        }
 
-        // Fetch user posts
-        const postsRes = await fetch(`https://tiktok-api23.p.rapidapi.com/api/user/posts?secUid=${encodeURIComponent(secUid)}&count=30&cursor=0`, {
-            headers: {
-                'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com',
-                'x-rapidapi-key': RAPIDAPI_KEY,
+        // Step 2: Fetch user posts (with 10s timeout)
+        const postsRes = await fetchWithTimeout(
+            `https://tiktok-api23.p.rapidapi.com/api/user/posts?secUid=${encodeURIComponent(secUid)}&count=30&cursor=0`,
+            {
+                headers: {
+                    'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com',
+                    'x-rapidapi-key': RAPIDAPI_KEY,
+                },
             },
-        });
+            10000
+        );
         const postsData = await postsRes.json();
 
         const items = postsData?.itemList || postsData?.items || [];
+        if (items.length === 0) {
+            console.log('TikTok: No posts returned for', username, '- response keys:', Object.keys(postsData));
+        }
+
         return items.map((item: any) => ({
             id: item.id || String(Math.random()),
             caption: (item.desc || item.title || '').substring(0, 300),
@@ -50,25 +79,93 @@ async function fetchTikTokVideos(username: string): Promise<PostData[]> {
             platform: 'tiktok' as const,
             timestamp: item.createTime ? new Date(item.createTime * 1000).toISOString() : undefined,
             isVideo: true,
-        })).sort((a: PostData, b: PostData) => b.views - a.views); // Sort by views descending
-    } catch (error) {
-        console.error('TikTok videos fetch error:', error);
-        return [];
+        })).sort((a: PostData, b: PostData) => b.views - a.views);
+    } catch (error: any) {
+        console.error('TikTok videos fetch error:', error.name === 'AbortError' ? 'TIMEOUT' : error.message);
+
+        // Fallback: Try web scraping via TikTok profile page
+        try {
+            return await fetchTikTokVideosFallback(username);
+        } catch (fbError) {
+            console.error('TikTok fallback also failed:', fbError);
+            return [];
+        }
     }
+}
+
+// Fallback: Scrape TikTok profile page for video data
+async function fetchTikTokVideosFallback(username: string): Promise<PostData[]> {
+    console.log('TikTok: Attempting web scrape fallback for', username);
+    const res = await fetchWithTimeout(
+        `https://www.tiktok.com/@${username}`,
+        {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
+        },
+        8000
+    );
+    const html = await res.text();
+
+    // Try to extract __UNIVERSAL_DATA_FOR_REHYDRATION__ or SIGI_STATE
+    const posts: PostData[] = [];
+    const sigiMatch = html.match(/<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>([\s\S]+?)<\/script>/)
+        || html.match(/<script id="SIGI_STATE"[^>]*>([\s\S]+?)<\/script>/);
+
+    if (sigiMatch) {
+        try {
+            const jsonData = JSON.parse(sigiMatch[1]);
+            // Try different paths where video data might live
+            const itemModule = jsonData?.__DEFAULT_SCOPE__?.['webapp.user-detail']?.userInfo?.user?.id
+                ? jsonData?.__DEFAULT_SCOPE__?.['webapp.video-detail']
+                : null;
+
+            // Try ItemList path
+            const itemList = jsonData?.ItemModule || jsonData?.items || {};
+            const entries = typeof itemList === 'object' ? Object.values(itemList) : [];
+
+            for (const item of entries as any[]) {
+                if (item?.desc || item?.id) {
+                    posts.push({
+                        id: item.id || String(Math.random()),
+                        caption: (item.desc || '').substring(0, 300),
+                        likes: item.stats?.diggCount || 0,
+                        comments: item.stats?.commentCount || 0,
+                        views: item.stats?.playCount || 0,
+                        url: `https://www.tiktok.com/@${username}/video/${item.id}`,
+                        platform: 'tiktok',
+                        timestamp: item.createTime ? new Date(item.createTime * 1000).toISOString() : undefined,
+                        isVideo: true,
+                    });
+                }
+            }
+        } catch (parseErr) {
+            console.error('TikTok: Failed to parse page JSON:', parseErr);
+        }
+    }
+
+    console.log(`TikTok fallback: found ${posts.length} videos via scraping`);
+    return posts.sort((a, b) => b.views - a.views);
 }
 
 // ===== INSTAGRAM: Fetch user posts =====
 async function fetchInstagramPosts(username: string): Promise<PostData[]> {
     try {
-        const res = await fetch('https://instagram120.p.rapidapi.com/api/instagram/posts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-rapidapi-host': 'instagram120.p.rapidapi.com',
-                'x-rapidapi-key': RAPIDAPI_KEY,
+        const res = await fetchWithTimeout(
+            'https://instagram120.p.rapidapi.com/api/instagram/posts',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-rapidapi-host': 'instagram120.p.rapidapi.com',
+                    'x-rapidapi-key': RAPIDAPI_KEY,
+                },
+                body: JSON.stringify({ username, maxId: '' }),
             },
-            body: JSON.stringify({ username, maxId: '' }),
-        });
+            15000
+        );
         const data = await res.json();
 
         const edges = data?.result?.edges || data?.items || [];
@@ -89,7 +186,7 @@ async function fetchInstagramPosts(username: string): Promise<PostData[]> {
                 caption: caption.substring(0, 300),
                 likes,
                 comments,
-                views: isVideo ? (views > 0 ? views : likes) : likes, // Instagram often returns 0 views, use likes as fallback
+                views: isVideo ? (views > 0 ? views : likes) : likes,
                 url: shortcode ? `https://www.instagram.com/p/${shortcode}/` : '',
                 thumbnail: node?.thumbnail_src || node?.display_url || node?.image_versions2?.candidates?.[0]?.url || '',
                 platform: 'instagram' as const,
@@ -101,11 +198,10 @@ async function fetchInstagramPosts(username: string): Promise<PostData[]> {
                 isVideo,
             };
         }).sort((a: PostData, b: PostData) => {
-            // Sort by total engagement: likes + comments (more reliable than views on Instagram)
             const engA = a.likes + a.comments;
             const engB = b.likes + b.comments;
             return engB - engA;
-        }); // Sort by engagement descending
+        });
     } catch (error) {
         console.error('Instagram posts fetch error:', error);
         return [];
@@ -115,27 +211,19 @@ async function fetchInstagramPosts(username: string): Promise<PostData[]> {
 export async function POST(req: Request) {
     try {
         const { tiktok, instagram } = await req.json();
-        const result: { tiktokPosts: PostData[]; instagramPosts: PostData[] } = {
-            tiktokPosts: [],
-            instagramPosts: [],
-        };
 
-        if (tiktok) {
-            const username = tiktok.replace('@', '').trim();
-            result.tiktokPosts = await fetchTikTokVideos(username);
-        }
-
-        if (instagram) {
-            const username = instagram.replace('@', '').trim();
-            result.instagramPosts = await fetchInstagramPosts(username);
-        }
+        // Fetch both in parallel with independent error handling
+        const [tiktokPosts, instagramPosts] = await Promise.all([
+            tiktok ? fetchTikTokVideos(tiktok.replace('@', '').trim()) : Promise.resolve([]),
+            instagram ? fetchInstagramPosts(instagram.replace('@', '').trim()) : Promise.resolve([]),
+        ]);
 
         return NextResponse.json({
             success: true,
-            tiktokPosts: result.tiktokPosts,
-            instagramPosts: result.instagramPosts,
-            totalTiktok: result.tiktokPosts.length,
-            totalInstagram: result.instagramPosts.length,
+            tiktokPosts,
+            instagramPosts,
+            totalTiktok: tiktokPosts.length,
+            totalInstagram: instagramPosts.length,
         });
     } catch (error: any) {
         console.error('Fetch own data error:', error);

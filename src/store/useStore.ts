@@ -167,11 +167,15 @@ export const useStore = create<StoreState>()(
                 if (tiktok.trim()) {
                     try {
                         const username = tiktok.replace('@', '').trim();
+                        const controller = new AbortController();
+                        const timeout = setTimeout(() => controller.abort(), 10000);
                         const res = await fetch('/api/extract-url', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ url: `https://www.tiktok.com/@${username}` }),
+                            signal: controller.signal,
                         });
+                        clearTimeout(timeout);
                         const data = await res.json();
                         if (!data.error) {
                             ownSocialData.tiktokFollowers = data.followers || 0;
