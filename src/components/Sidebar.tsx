@@ -8,10 +8,10 @@ import { useState, useEffect } from "react";
 
 const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },
-    { name: "Intelligence", href: "/dashboard/intel", icon: Brain },
-    { name: "Studio", href: "/dashboard/studio", icon: Clapperboard },
-    { name: "Tools", href: "/dashboard/tools", icon: FlaskConical },
-    { name: "Calendar", href: "/dashboard/calendar", icon: CalendarDays },
+    { name: "Intelligence", href: "/dashboard/intel", icon: Brain, beta: true },
+    { name: "Studio", href: "/dashboard/studio", icon: Clapperboard, beta: true },
+    { name: "Tools", href: "/dashboard/tools", icon: FlaskConical, beta: true },
+    { name: "Calendar", href: "/dashboard/calendar", icon: CalendarDays, beta: true },
     { name: "AI Script Chat", href: "/dashboard/chat", icon: MessageSquare },
 ];
 
@@ -79,6 +79,11 @@ export function Sidebar() {
                             className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-white/10 text-white" : "text-neutral-500 hover:bg-white/5 hover:text-neutral-300"}`}>
                             <item.icon className={`w-5 h-5 ${isActive ? "text-white" : "text-neutral-600"}`} />
                             <span className="font-medium">{item.name}</span>
+                            {item.beta && (
+                                <span className="ml-auto text-[9px] font-bold uppercase tracking-widest text-neutral-500 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
+                                    beta
+                                </span>
+                            )}
                         </Link>
                     );
                 })}
