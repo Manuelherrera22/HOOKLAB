@@ -47,16 +47,47 @@ export async function POST(req: Request) {
             let tiktokPosts = ownSocials.data?.tiktokPostsList || [];
 
             // If no posts from client, query Supabase directly for scraped videos
-            if (tiktokPosts.length === 0 && accountId) {
+            if (tiktokPosts.length === 0 && (accountId || ownSocials.tiktok)) {
                 try {
                     const supabase = createClient(supabaseUrl, supabaseKey);
-                    const { data: scrapedVideos } = await supabase
-                        .from('scraped_videos')
-                        .select('video_id, caption, likes, comments, views, url, timestamp, platform')
-                        .eq('account_id', accountId)
-                        .eq('platform', 'tiktok')
-                        .order('views', { ascending: false })
-                        .limit(20);
+                    let scrapedVideos: any[] | null = null;
+
+                    // First try by account_id
+                    if (accountId) {
+                        const { data } = await supabase
+                            .from('scraped_videos')
+                            .select('video_id, caption, likes, comments, views, url, timestamp, platform')
+                            .eq('account_id', accountId)
+                            .eq('platform', 'tiktok')
+                            .order('views', { ascending: false })
+                            .limit(20);
+                        scrapedVideos = data;
+                    }
+
+                    // Fallback: query by username via scrape_missions join
+                    if ((!scrapedVideos || scrapedVideos.length === 0) && ownSocials.tiktok) {
+                        const tiktokUsername = ownSocials.tiktok.replace('@', '').trim();
+                        // Find latest completed mission for this username
+                        const { data: mission } = await supabase
+                            .from('scrape_missions')
+                            .select('id')
+                            .eq('username', tiktokUsername)
+                            .eq('status', 'completed')
+                            .order('completed_at', { ascending: false })
+                            .limit(1)
+                            .maybeSingle();
+
+                        if (mission) {
+                            const { data } = await supabase
+                                .from('scraped_videos')
+                                .select('video_id, caption, likes, comments, views, url, timestamp, platform')
+                                .eq('mission_id', mission.id)
+                                .order('views', { ascending: false })
+                                .limit(20);
+                            scrapedVideos = data;
+                            console.log(`[Chat] Found ${scrapedVideos?.length || 0} videos via username mission lookup`);
+                        }
+                    }
 
                     if (scrapedVideos && scrapedVideos.length > 0) {
                         tiktokPosts = scrapedVideos.map((v: any) => ({
@@ -69,7 +100,7 @@ export async function POST(req: Request) {
                             platform: 'tiktok',
                             timestamp: v.timestamp,
                         }));
-                        console.log(`[Chat] Loaded ${tiktokPosts.length} TikTok videos directly from scraped_videos`);
+                        console.log(`[Chat] Loaded ${tiktokPosts.length} TikTok videos from scraped_videos`);
                     }
                 } catch (e) {
                     console.error('[Chat] Failed to load scraped_videos:', e);
