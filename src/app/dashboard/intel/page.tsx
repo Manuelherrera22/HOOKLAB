@@ -20,7 +20,7 @@ interface IntelData {
 }
 
 const PHASES = [
-    "Scraping videos", "Lead profiling", "Hook decoding",
+    "Analyzing videos", "Lead profiling", "Hook decoding",
     "Content spy", "Audience mirror", "Trend radar", "Mediakit PDF"
 ];
 
@@ -240,6 +240,48 @@ export default function IntelligencePage() {
                     <Brain className="w-12 h-12 text-neutral-700 mx-auto mb-3" />
                     <p className="text-neutral-500">No intelligence data found for <span className="text-white font-semibold">@{username}</span></p>
                     <p className="text-neutral-600 text-sm mt-1">Click <strong>Run Full Analysis</strong> above to generate data.</p>
+                </div>
+            )}
+
+            {!loading && !hasAnyData && !username && (
+                <div className="space-y-6 animate-in fade-in">
+                    {/* Getting Started Guide */}
+                    <div className="bg-card border border-fuchsia-500/10 rounded-2xl p-6 text-center">
+                        <Brain className="w-12 h-12 text-fuchsia-400 mx-auto mb-3" />
+                        <h2 className="text-lg font-bold text-white mb-1">Start Your Intelligence Analysis</h2>
+                        <p className="text-sm text-neutral-400 max-w-md mx-auto">
+                            Enter any TikTok username above to unlock a complete commercial profile with AI-powered insights.
+                        </p>
+                    </div>
+
+                    {/* What You'll Get */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[
+                            { icon: <User className="w-5 h-5" />, label: "Lead Profile", desc: "Full commercial breakdown", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
+                            { icon: <Zap className="w-5 h-5" />, label: "Hook Analysis", desc: "Top performing hooks decoded", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+                            { icon: <Eye className="w-5 h-5" />, label: "Content Spy", desc: "Winning content patterns", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+                            { icon: <Users className="w-5 h-5" />, label: "Audience Mirror", desc: "Demographics & psychographics", color: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
+                            { icon: <Radar className="w-5 h-5" />, label: "Trend Radar", desc: "Rising trends in niche", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
+                            { icon: <Swords className="w-5 h-5" />, label: "Battle Map", desc: "Head-to-head competitor comparison", color: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
+                        ].map(f => (
+                            <div key={f.label} className={`${f.color} border rounded-2xl p-4`}>
+                                <div className="mb-2">{f.icon}</div>
+                                <p className="text-sm font-semibold text-white">{f.label}</p>
+                                <p className="text-[11px] text-neutral-400">{f.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Quick Start Hint */}
+                    <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl p-4 text-center">
+                        <p className="text-xs text-neutral-500">
+                            💡 <span className="text-neutral-400">Try:</span> <button onClick={() => { setUsername("kiyosaki.criollo"); fetchIntel("kiyosaki.criollo"); }} className="text-fuchsia-400 hover:text-fuchsia-300 underline">kiyosaki.criollo</button>
+                            {" · "}
+                            <button onClick={() => { setUsername("luiscarlossi"); fetchIntel("luiscarlossi"); }} className="text-fuchsia-400 hover:text-fuchsia-300 underline">luiscarlossi</button>
+                            {" · "}
+                            <button onClick={() => { setUsername("garyvee"); fetchIntel("garyvee"); }} className="text-fuchsia-400 hover:text-fuchsia-300 underline">garyvee</button>
+                        </p>
+                    </div>
                 </div>
             )}
 

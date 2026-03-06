@@ -2,7 +2,7 @@
 
 import { useStore, ChatMessage } from "@/store/useStore";
 import { useChat, Message } from "ai/react";
-import { Bot, User as UserIcon, Send, Settings, Check, X, Sparkles, Trash2, Paperclip, Mic, MicOff, Image as ImageIcon, FileText, XCircle } from "lucide-react";
+import { Hexagon, User as UserIcon, Send, Settings, Check, X, Sparkles, Trash2, Paperclip, Mic, MicOff, Image as ImageIcon, FileText, XCircle, MessageSquare } from "lucide-react";
 import { useRef, useEffect, useState, useCallback } from "react";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
@@ -340,7 +340,7 @@ export default function ChatPage() {
                     <div className="flex items-center space-x-2">
                         <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Account</span>
                         <div className="flex items-center space-x-2 px-3 py-1.5 bg-neutral-800 rounded-lg">
-                            <UserIcon className="w-4 h-4 text-emerald-400" />
+                            <UserIcon className="w-4 h-4 text-neutral-400" />
                             <span className="text-sm font-medium text-white">{user?.name}</span>
                         </div>
                     </div>
@@ -348,7 +348,7 @@ export default function ChatPage() {
                     <div className="flex items-center space-x-2">
                         <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Framework</span>
                         <div className="flex items-center space-x-2 px-3 py-1.5 bg-neutral-800 rounded-lg border border-neutral-700">
-                            <Settings className="w-4 h-4 text-blue-400" />
+                            <Settings className="w-4 h-4 text-neutral-400" />
                             <span className="text-sm font-medium text-white">Robar Como Un Artista</span>
                         </div>
                     </div>
@@ -356,7 +356,7 @@ export default function ChatPage() {
                     {knowledge.length > 0 && (
                         <div className="flex items-center space-x-2">
                             <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Knowledge</span>
-                            <div className="px-3 py-1.5 bg-amber-500/10 text-amber-300 rounded-lg text-sm font-medium border border-amber-500/20">
+                            <div className="px-3 py-1.5 bg-white/5 text-neutral-300 rounded-lg text-sm font-medium border border-white/10">
                                 {knowledge.length} entries loaded
                             </div>
                         </div>
@@ -372,7 +372,7 @@ export default function ChatPage() {
                                 <button
                                     key={ref.id}
                                     onClick={() => toggleRef(ref.id)}
-                                    className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${isActive ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-neutral-800 text-neutral-500 hover:text-neutral-300 border border-transparent'}`}
+                                    className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${isActive ? 'bg-white/10 text-neutral-200 border border-white/20' : 'bg-neutral-800 text-neutral-500 hover:text-neutral-300 border border-transparent'}`}
                                 >
                                     {isActive ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
                                     <span>{ref.refName || ref.name}</span>
@@ -392,7 +392,7 @@ export default function ChatPage() {
                     <div key={msg.id || i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`flex max-w-[95%] md:max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                             <div className={`shrink-0 hidden sm:flex items-start justify-center w-8 h-8 rounded-full mt-1 ${msg.role === 'user' ? 'bg-neutral-700 ml-3' : 'bg-white mr-3'}`}>
-                                {msg.role === 'user' ? <UserIcon className="w-4 h-4 text-white mt-2" /> : <Bot className="w-5 h-5 text-black mt-1.5" />}
+                                {msg.role === 'user' ? <UserIcon className="w-4 h-4 text-white mt-2" /> : <Hexagon className="w-5 h-5 text-black mt-1.5" />}
                             </div>
                             <div className="flex flex-col">
                                 <div className={`rounded-2xl px-4 py-3 ${msg.role === 'user' ? 'bg-white text-black' : 'bg-neutral-900 border border-neutral-800 text-neutral-200'}`}>
@@ -402,19 +402,19 @@ export default function ChatPage() {
                                         <div>
                                             {/* Show file indicators with icons */}
                                             {hasImageIndicator(msg.content) && (
-                                                <div className="flex items-center gap-2 mb-2 px-2 py-1 bg-blue-50 rounded-lg text-blue-600 text-xs font-medium">
+                                                <div className="flex items-center gap-2 mb-2 px-2 py-1 bg-white/5 rounded-lg text-neutral-400 text-xs font-medium">
                                                     <ImageIcon className="w-4 h-4" />
                                                     <span>Imagen adjunta</span>
                                                 </div>
                                             )}
                                             {hasAudioIndicator(msg.content) && (
-                                                <div className="flex items-center gap-2 mb-2 px-2 py-1 bg-purple-50 rounded-lg text-purple-600 text-xs font-medium">
+                                                <div className="flex items-center gap-2 mb-2 px-2 py-1 bg-white/5 rounded-lg text-neutral-400 text-xs font-medium">
                                                     <Mic className="w-4 h-4" />
                                                     <span>Audio adjunto</span>
                                                 </div>
                                             )}
                                             {hasDocIndicator(msg.content) && (
-                                                <div className="flex items-center gap-2 mb-2 px-2 py-1 bg-amber-50 rounded-lg text-amber-600 text-xs font-medium">
+                                                <div className="flex items-center gap-2 mb-2 px-2 py-1 bg-white/5 rounded-lg text-neutral-400 text-xs font-medium">
                                                     <FileText className="w-4 h-4" />
                                                     <span>Documento adjunto</span>
                                                 </div>
@@ -456,11 +456,11 @@ export default function ChatPage() {
                             {att.type === 'image' && att.preview ? (
                                 <img src={att.preview} alt={att.name} className="w-10 h-10 rounded-md object-cover" />
                             ) : att.type === 'image' ? (
-                                <ImageIcon className="w-5 h-5 text-blue-400" />
+                                <ImageIcon className="w-5 h-5 text-neutral-400" />
                             ) : att.type === 'audio' ? (
-                                <Mic className="w-5 h-5 text-purple-400" />
+                                <Mic className="w-5 h-5 text-neutral-400" />
                             ) : (
-                                <FileText className="w-5 h-5 text-amber-400" />
+                                <FileText className="w-5 h-5 text-neutral-400" />
                             )}
                             <span className="text-xs text-neutral-300 max-w-[120px] truncate">{att.name}</span>
                             <button
@@ -543,7 +543,7 @@ export default function ChatPage() {
                     <button
                         type="submit"
                         disabled={isLoading || isSending || (!input.trim() && attachments.length === 0)}
-                        className={`p-2 rounded-xl transition-colors shrink-0 ${attachments.length > 0 ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-white text-black hover:bg-neutral-200'} disabled:opacity-30`}
+                        className={`p-2 rounded-xl transition-colors shrink-0 ${attachments.length > 0 ? 'bg-white text-black hover:bg-neutral-200' : 'bg-white text-black hover:bg-neutral-200'} disabled:opacity-30`}
                     >
                         <Send className="w-4 h-4" />
                     </button>

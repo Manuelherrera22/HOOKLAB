@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         return NextResponse.json({
             missionId: mission.id,
             status: 'pending',
-            message: 'Scraping mission created. Worker will process it shortly.',
+            message: 'Analysis mission created. Worker will process it shortly.',
         });
     } catch (error: any) {
         console.error('Scrape mission error:', error);

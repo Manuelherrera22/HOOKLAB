@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@/store/useStore";
 import {
     Instagram, Plus, Trash2, ExternalLink, RefreshCw, Loader2,
-    Users, Heart, Film, BookOpen, Save, Link2, X
+    Users, Heart, Film, BookOpen, Save, Link2, X, TrendingUp,
+    Video, Calendar, Globe, Check, Sparkles, Target, BarChart3
 } from "lucide-react";
 
 export default function DashboardOverview() {
@@ -22,6 +23,8 @@ export default function DashboardOverview() {
     const [ownTiktok, setOwnTiktok] = useState(user?.ownTiktok || '');
     const [ownInstagram, setOwnInstagram] = useState(user?.ownInstagram || '');
     const [savingSocials, setSavingSocials] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+    const [scheduledCount, setScheduledCount] = useState(0);
 
     // Reference form state
     const [showRefForm, setShowRefForm] = useState(false);
@@ -37,10 +40,20 @@ export default function DashboardOverview() {
 
     const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
+    useEffect(() => {
+        if (user?.id) {
+            fetch(`/api/scheduled-posts?accountId=${user.id}&status=scheduled`)
+                .then(r => r.json()).then(j => setScheduledCount(j.posts?.length || 0)).catch(() => { });
+        }
+    }, [user?.id]);
+
+    const connectedAccounts = [user?.ownTiktok, user?.ownInstagram].filter(Boolean).length;
+
     const handleSaveSocials = async () => {
-        setSavingSocials(true);
+        setSavingSocials(true); setSaveSuccess(false);
         await updateOwnSocials(ownTiktok, ownInstagram);
-        setSavingSocials(false);
+        setSavingSocials(false); setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
     };
 
     const ownData = user?.ownSocialData;
@@ -94,24 +107,51 @@ export default function DashboardOverview() {
     }, {} as Record<string, typeof references>);
 
     const platformColors: Record<string, string> = {
-        youtube: 'text-red-400 bg-red-500/10 border-red-500/20',
-        tiktok: 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/20',
-        instagram: 'text-pink-400 bg-pink-500/10 border-pink-500/20',
-        other: 'text-neutral-400 bg-neutral-500/10 border-neutral-500/20',
+        youtube: 'text-neutral-300 bg-white/5 border-white/10',
+        tiktok: 'text-neutral-300 bg-white/5 border-white/10',
+        instagram: 'text-neutral-300 bg-white/5 border-white/10',
+        other: 'text-neutral-400 bg-white/5 border-white/10',
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-1">Welcome, {user?.name}</h1>
-                <p className="text-neutral-400 text-sm">Manage your social accounts, track references, and build your knowledge base.</p>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-1">
+                    Welcome, {user?.name} 👋
+                </h1>
+                <p className="text-neutral-400 text-sm">Your command center for social intelligence, content creation, and publishing.</p>
             </div>
+
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                    { label: "Accounts", value: connectedAccounts, max: 2, icon: <Globe className="w-5 h-5" />, color: "text-neutral-300", bg: "bg-white/5 border-white/10" },
+                    { label: "References", value: references.length, icon: <Target className="w-5 h-5" />, color: "text-neutral-300", bg: "bg-white/5 border-white/10" },
+                    { label: "Knowledge", value: knowledge.length, icon: <BookOpen className="w-5 h-5" />, color: "text-neutral-300", bg: "bg-white/5 border-white/10" },
+                    { label: "Scheduled", value: scheduledCount, icon: <Calendar className="w-5 h-5" />, color: "text-neutral-300", bg: "bg-white/5 border-white/10" },
+                ].map(s => (
+                    <div key={s.label} className={`${s.bg} border rounded-2xl p-4 flex items-center gap-3`}>
+                        <div className={`${s.color}`}>{s.icon}</div>
+                        <div>
+                            <p className="text-xl font-bold text-white">{s.value}{s.max ? `/${s.max}` : ''}</p>
+                            <p className="text-[10px] text-neutral-500 uppercase tracking-wider">{s.label}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Save Success Toast */}
+            {saveSuccess && (
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-neutral-300 animate-in fade-in">
+                    <Check className="w-4 h-4" /> Accounts saved and connected successfully!
+                </div>
+            )}
 
             {/* ===== SECTION 1: MIS REDES SOCIALES ===== */}
             <section className="bg-card border border-border rounded-2xl p-5 md:p-6">
                 <h2 className="text-lg font-semibold text-white mb-1 flex items-center space-x-2">
-                    <Instagram className="w-5 h-5 text-pink-400" />
+                    <Instagram className="w-5 h-5 text-neutral-400" />
                     <span>My Social Networks</span>
                 </h2>
                 <p className="text-sm text-neutral-500 mb-5">Your own Instagram and TikTok accounts for content analysis.</p>
@@ -123,7 +163,7 @@ export default function DashboardOverview() {
                             value={ownTiktok}
                             onChange={(e) => setOwnTiktok(e.target.value)}
                             placeholder="@your_tiktok_username"
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/50"
+                            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20"
                         />
                     </div>
                     <div>
@@ -132,7 +172,7 @@ export default function DashboardOverview() {
                             value={ownInstagram}
                             onChange={(e) => setOwnInstagram(e.target.value)}
                             placeholder="@your_instagram_username"
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-pink-500/50"
+                            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20"
                         />
                     </div>
                 </div>
@@ -149,21 +189,21 @@ export default function DashboardOverview() {
                 {ownData && (ownData.tiktokFollowers || ownData.tiktokNickname || ownData.instagramFollowers || ownData.instagramPostsList?.length || ownData.instagramPosts) && (
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                         {(ownData.tiktokFollowers !== undefined && ownData.tiktokFollowers > 0 || ownData.tiktokNickname) && (
-                            <div className="bg-fuchsia-500/5 border border-fuchsia-500/20 rounded-xl p-3">
-                                <p className="text-xs text-fuchsia-400 font-semibold mb-1">♪ TikTok — {ownData.tiktokNickname || user?.ownTiktok}</p>
-                                <div className="flex items-center space-x-3 text-xs text-neutral-300">
-                                    <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-blue-400" /><span>{formatNumber(ownData.tiktokFollowers || 0)} followers</span></span>
-                                    {ownData.tiktokLikes !== undefined && <span className="flex items-center space-x-1"><Heart className="w-3 h-3 text-red-400" /><span>{formatNumber(ownData.tiktokLikes)}</span></span>}
-                                    {ownData.tiktokVideos !== undefined && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-purple-400" /><span>{ownData.tiktokVideos} videos</span></span>}
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                                <p className="text-xs text-neutral-300 font-semibold mb-1">♪ TikTok — {ownData.tiktokNickname || user?.ownTiktok}</p>
+                                <div className="flex items-center space-x-3 text-xs text-neutral-400">
+                                    <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-neutral-500" /><span>{formatNumber(ownData.tiktokFollowers || 0)} followers</span></span>
+                                    {ownData.tiktokLikes !== undefined && <span className="flex items-center space-x-1"><Heart className="w-3 h-3 text-neutral-500" /><span>{formatNumber(ownData.tiktokLikes)}</span></span>}
+                                    {ownData.tiktokVideos !== undefined && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-neutral-500" /><span>{ownData.tiktokVideos} videos</span></span>}
                                 </div>
                             </div>
                         )}
                         {(user?.ownInstagram) && (
-                            <div className="bg-pink-500/5 border border-pink-500/20 rounded-xl p-3">
-                                <p className="text-xs text-pink-400 font-semibold mb-1">◎ Instagram — @{user?.ownInstagram?.replace('@', '')}</p>
-                                <div className="flex items-center space-x-3 text-xs text-neutral-300">
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                                <p className="text-xs text-neutral-300 font-semibold mb-1">◎ Instagram — @{user?.ownInstagram?.replace('@', '')}</p>
+                                <div className="flex items-center space-x-3 text-xs text-neutral-400">
                                     {ownData.instagramFollowers !== undefined && ownData.instagramFollowers > 0 && (
-                                        <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-blue-400" /><span>{formatNumber(ownData.instagramFollowers)} followers</span></span>
+                                        <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-neutral-500" /><span>{formatNumber(ownData.instagramFollowers)} followers</span></span>
                                     )}
                                     {(() => {
                                         const posts = ownData.instagramPostsList || [];
@@ -171,9 +211,9 @@ export default function DashboardOverview() {
                                         const totalComments = posts.reduce((sum: number, p: any) => sum + (p.comments || 0), 0);
                                         return (
                                             <>
-                                                {posts.length > 0 && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-purple-400" /><span>{posts.length} posts</span></span>}
-                                                {totalLikes > 0 && <span className="flex items-center space-x-1"><Heart className="w-3 h-3 text-red-400" /><span>{formatNumber(totalLikes)} likes</span></span>}
-                                                {totalComments > 0 && <span className="text-amber-400">💬 {formatNumber(totalComments)}</span>}
+                                                {posts.length > 0 && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-neutral-500" /><span>{posts.length} posts</span></span>}
+                                                {totalLikes > 0 && <span className="flex items-center space-x-1"><Heart className="w-3 h-3 text-neutral-500" /><span>{formatNumber(totalLikes)} likes</span></span>}
+                                                {totalComments > 0 && <span className="text-neutral-400">💬 {formatNumber(totalComments)}</span>}
                                             </>
                                         );
                                     })()}
@@ -188,7 +228,7 @@ export default function DashboardOverview() {
             <section className="bg-card border border-border rounded-2xl p-5 md:p-6">
                 <div className="flex items-center justify-between mb-1">
                     <h2 className="text-lg font-semibold text-white flex items-center space-x-2">
-                        <Users className="w-5 h-5 text-blue-400" />
+                        <Users className="w-5 h-5 text-neutral-400" />
                         <span>References</span>
                     </h2>
                     <button
@@ -240,7 +280,7 @@ export default function DashboardOverview() {
                             ))}
                             <button
                                 onClick={() => setRefUrls([...refUrls, ''])}
-                                className="text-xs text-blue-400 hover:text-blue-300 flex items-center space-x-1 mt-1"
+                                className="text-xs text-neutral-400 hover:text-neutral-300 flex items-center space-x-1 mt-1"
                             >
                                 <Plus className="w-3 h-3" />
                                 <span>Add another URL</span>
@@ -280,7 +320,7 @@ export default function DashboardOverview() {
                                                 <div className="flex items-center space-x-2 text-xs text-neutral-500">
                                                     <span className="capitalize">{ref.platform}</span>
                                                     {ref.author && <span>• {ref.author}</span>}
-                                                    <a href={ref.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 flex items-center space-x-0.5">
+                                                    <a href={ref.url} target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-neutral-300 flex items-center space-x-0.5">
                                                         <ExternalLink className="w-3 h-3" />
                                                     </a>
                                                 </div>
@@ -289,25 +329,25 @@ export default function DashboardOverview() {
 
                                         <div className="flex items-center space-x-3 text-xs shrink-0">
                                             {ref.followers !== undefined && ref.followers > 0 && (
-                                                <span className="flex items-center space-x-1 text-blue-400">
+                                                <span className="flex items-center space-x-1 text-neutral-400">
                                                     <Users className="w-3 h-3" /><span>{formatNumber(ref.followers)}</span>
                                                 </span>
                                             )}
                                             {ref.likes !== undefined && ref.likes > 0 && (
-                                                <span className="flex items-center space-x-1 text-red-400">
+                                                <span className="flex items-center space-x-1 text-neutral-400">
                                                     <Heart className="w-3 h-3" /><span>{formatNumber(ref.likes)}</span>
                                                 </span>
                                             )}
                                             {ref.videoCount !== undefined && ref.videoCount > 0 && (
-                                                <span className="flex items-center space-x-1 text-purple-400">
+                                                <span className="flex items-center space-x-1 text-neutral-400">
                                                     <Film className="w-3 h-3" /><span>{ref.videoCount}</span>
                                                 </span>
                                             )}
                                             <span className="font-bold text-white text-sm">{formatNumber(ref.views)}</span>
-                                            <button onClick={() => handleRefresh(ref.id)} disabled={refreshingId === ref.id} className="p-1 text-neutral-500 hover:text-blue-400">
+                                            <button onClick={() => handleRefresh(ref.id)} disabled={refreshingId === ref.id} className="p-1 text-neutral-600 hover:text-neutral-300">
                                                 <RefreshCw className={`w-3.5 h-3.5 ${refreshingId === ref.id ? 'animate-spin' : ''}`} />
                                             </button>
-                                            <button onClick={() => removeReference(ref.id)} className="p-1 text-neutral-500 hover:text-red-400">
+                                            <button onClick={() => removeReference(ref.id)} className="p-1 text-neutral-600 hover:text-neutral-300">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
@@ -327,7 +367,7 @@ export default function DashboardOverview() {
             <section className="bg-card border border-border rounded-2xl p-5 md:p-6">
                 <div className="flex items-center justify-between mb-1">
                     <h2 className="text-lg font-semibold text-white flex items-center space-x-2">
-                        <BookOpen className="w-5 h-5 text-amber-400" />
+                        <BookOpen className="w-5 h-5 text-neutral-400" />
                         <span>Knowledge Base</span>
                     </h2>
                     <button
@@ -388,7 +428,7 @@ export default function DashboardOverview() {
                                     <p className="text-neutral-400 text-sm mt-1 whitespace-pre-wrap line-clamp-4">{entry.content}</p>
                                     <p className="text-xs text-neutral-600 mt-2">{new Date(entry.createdAt).toLocaleDateString()}</p>
                                 </div>
-                                <button onClick={() => removeKnowledge(entry.id)} className="p-1.5 text-neutral-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-3">
+                                <button onClick={() => removeKnowledge(entry.id)} className="p-1.5 text-neutral-600 hover:text-neutral-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-3">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
