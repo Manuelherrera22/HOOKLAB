@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bot, Home, LogOut, Menu, X } from "lucide-react";
+import { Bot, Home, LogOut, Menu, X, Brain, CalendarDays } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { useState, useEffect } from "react";
 
 const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },
+    { name: "Intelligence", href: "/dashboard/intel", icon: Brain },
+    { name: "Calendar", href: "/dashboard/calendar", icon: CalendarDays },
     { name: "AI Script Chat", href: "/dashboard/chat", icon: Bot },
 ];
 

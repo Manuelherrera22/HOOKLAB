@@ -146,6 +146,81 @@ export async function POST(req: Request) {
         }
 
         ownSocialsBlock += `IMPORTANT: When the user asks about THEIR most viral video/post, use the data above to identify it. Also analyze the caption/script of the top performing content and explain WHY it went viral. You CAN answer questions about their specific content because you have real data.\n`;
+
+        // ── INTELLIGENCE DATA INJECTION ──
+        if (ownSocials.tiktok) {
+            try {
+                const tiktokUsername = ownSocials.tiktok.replace('@', '').trim();
+                const sbClient = createClient(supabaseUrl, supabaseKey);
+
+                const [hookRes, audienceRes, trendRes, profileRes] = await Promise.all([
+                    sbClient.from('hook_analyses').select('hook_type, hook_text, adaptable_template, why_it_worked')
+                        .eq('username', tiktokUsername).order('created_at', { ascending: false }).limit(5),
+                    sbClient.from('audience_insights').select('top_questions, objections, product_requests, sentiment, audience_segments')
+                        .eq('username', tiktokUsername).order('created_at', { ascending: false }).limit(1),
+                    sbClient.from('trend_snapshots').select('rising_topics, dying_topics, prediction')
+                        .eq('niche', tiktokUsername).order('created_at', { ascending: false }).limit(1),
+                    sbClient.from('profile_analyses').select('buyer_persona, sales_approach, content_patterns')
+                        .eq('username', tiktokUsername).eq('analysis_type', 'lead_profile').order('created_at', { ascending: false }).limit(1),
+                ]);
+
+                let intelBlock = '';
+                const hooks = hookRes.data || [];
+                const audience = audienceRes.data?.[0];
+                const trends = trendRes.data?.[0];
+                const profile = profileRes.data?.[0];
+
+                if (hooks.length > 0) {
+                    intelBlock += '\n### 🪝 Hooks That Work in This Niche:\n';
+                    hooks.forEach((h: any, i: number) => {
+                        intelBlock += `${i + 1}. [${h.hook_type}] "${h.hook_text}" → Template: ${h.adaptable_template}\n`;
+                    });
+                }
+
+                if (audience) {
+                    intelBlock += '\n### 👥 Audience Intelligence:\n';
+                    intelBlock += `Sentiment: ${audience.sentiment}\n`;
+                    if (audience.top_questions?.length) intelBlock += `Questions they ask: ${audience.top_questions.join('; ')}\n`;
+                    if (audience.objections?.length) intelBlock += `Objections: ${audience.objections.join('; ')}\n`;
+                    if (audience.product_requests?.length) intelBlock += `Products they want: ${audience.product_requests.join('; ')}\n`;
+                    if (audience.audience_segments?.length) {
+                        intelBlock += 'Segments: ' + audience.audience_segments.map((s: any) => `${s.type} ${s.percentage}%`).join(', ') + '\n';
+                    }
+                }
+
+                if (trends) {
+                    intelBlock += '\n### 📡 Trend Intelligence:\n';
+                    if (trends.rising_topics?.length) intelBlock += `Rising: ${trends.rising_topics.join(', ')}\n`;
+                    if (trends.dying_topics?.length) intelBlock += `Avoid: ${trends.dying_topics.join(', ')}\n`;
+                    if (trends.prediction) {
+                        if (trends.prediction.next_week) intelBlock += `Next week prediction: ${trends.prediction.next_week}\n`;
+                        if (trends.prediction.avoid) intelBlock += `Topics to avoid: ${trends.prediction.avoid}\n`;
+                    }
+                }
+
+                if (profile?.buyer_persona) {
+                    const bp = profile.buyer_persona;
+                    intelBlock += `\n### 🎯 Buyer Persona:\n`;
+                    Object.entries(bp).forEach(([k, v]) => {
+                        intelBlock += `${k}: ${Array.isArray(v) ? (v as string[]).join(', ') : v}\n`;
+                    });
+                    if (profile.sales_approach?.recommended_pitch) {
+                        intelBlock += `\nRecommended pitch: "${profile.sales_approach.recommended_pitch}"\n`;
+                    }
+                }
+
+                if (intelBlock) {
+                    ownSocialsBlock += '\n===== 🧠 DEEP INTELLIGENCE (AI-Analyzed) =====\n';
+                    ownSocialsBlock += 'Use this intelligence to create HYPER-TARGETED content. These are real insights from analyzing this account\'s content and niche.\n';
+                    ownSocialsBlock += intelBlock;
+                    ownSocialsBlock += '\nIMPORTANT: When generating hooks, USE the proven hook templates above. When choosing topics, PRIORITIZE rising trends and AVOID dying ones. When crafting CTAs, address the audience\'s specific questions and objections.\n';
+                }
+
+                console.log(`[Chat] Loaded intelligence: ${hooks.length} hooks, audience=${!!audience}, trends=${!!trends}, profile=${!!profile}`);
+            } catch (e) {
+                console.error('[Chat] Failed to load intelligence data:', e);
+            }
+        }
     }
 
     const systemPrompt = `You are HOOKLAB Script Engine — an elite-tier content strategist, screenwriter, and viral growth hacker specialized in the financial trading niche (Forex, Crypto, Day Trading). You operate at the level of the top 0.1% of content creators globally.

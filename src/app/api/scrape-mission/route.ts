@@ -9,11 +9,14 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // GET:  Check mission status + get results
 export async function POST(req: Request) {
     try {
-        const { accountId, username, platform = 'tiktok' } = await req.json();
+        const { accountId, username, platform = 'tiktok', missionType = 'scrape_videos' } = await req.json();
 
         if (!accountId || !username) {
             return NextResponse.json({ error: 'accountId and username are required' }, { status: 400 });
         }
+
+        const validTypes = ['scrape_videos', 'lead_profile', 'hook_decode', 'content_spy', 'audience_mirror', 'trend_scan', 'mediakit', 'full_intel', 'full_report'];
+        const finalType = validTypes.includes(missionType) ? missionType : 'scrape_videos';
 
         // Check for existing pending/running mission for same user+username
         const { data: existing } = await supabase
@@ -40,6 +43,7 @@ export async function POST(req: Request) {
                 username: username.replace('@', '').trim(),
                 platform,
                 status: 'pending',
+                mission_type: finalType,
             }])
             .select('*')
             .single();
