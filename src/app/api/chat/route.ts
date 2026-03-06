@@ -1,7 +1,11 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
+import { createClient } from '@supabase/supabase-js';
 
 export const maxDuration = 60;
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 function formatNumber(n: number): string {
     if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + 'B';
@@ -14,6 +18,7 @@ export async function POST(req: Request) {
     const { messages, data } = await req.json();
 
     const accountName = data?.accountName || 'HOOKLAB Admin';
+    const accountId = data?.accountId || '';
     const references = data?.references || [];
     const knowledge = data?.knowledge || [];
     const ownSocials = data?.ownSocials || {};
@@ -38,8 +43,39 @@ export async function POST(req: Request) {
                 ownSocialsBlock += `Followers: ${formatNumber(ownSocials.data.tiktokFollowers)} | Total Likes: ${formatNumber(ownSocials.data.tiktokLikes || 0)} | Videos: ${ownSocials.data.tiktokVideos || 0}\n`;
             }
 
-            // Individual TikTok videos
-            const tiktokPosts = ownSocials.data?.tiktokPostsList || [];
+            // Individual TikTok videos — first try from client store, then from Supabase
+            let tiktokPosts = ownSocials.data?.tiktokPostsList || [];
+
+            // If no posts from client, query Supabase directly for scraped videos
+            if (tiktokPosts.length === 0 && accountId) {
+                try {
+                    const supabase = createClient(supabaseUrl, supabaseKey);
+                    const { data: scrapedVideos } = await supabase
+                        .from('scraped_videos')
+                        .select('video_id, caption, likes, comments, views, url, timestamp, platform')
+                        .eq('account_id', accountId)
+                        .eq('platform', 'tiktok')
+                        .order('views', { ascending: false })
+                        .limit(20);
+
+                    if (scrapedVideos && scrapedVideos.length > 0) {
+                        tiktokPosts = scrapedVideos.map((v: any) => ({
+                            id: v.video_id,
+                            caption: v.caption || '',
+                            likes: v.likes || 0,
+                            comments: v.comments || 0,
+                            views: v.views || 0,
+                            url: v.url || '',
+                            platform: 'tiktok',
+                            timestamp: v.timestamp,
+                        }));
+                        console.log(`[Chat] Loaded ${tiktokPosts.length} TikTok videos directly from scraped_videos`);
+                    }
+                } catch (e) {
+                    console.error('[Chat] Failed to load scraped_videos:', e);
+                }
+            }
+
             if (tiktokPosts.length > 0) {
                 ownSocialsBlock += `\n### TikTok Videos (${tiktokPosts.length} total, sorted by views):\n`;
                 tiktokPosts.slice(0, 20).forEach((p: any, i: number) => {
@@ -49,10 +85,9 @@ export async function POST(req: Request) {
                     ownSocialsBlock += '\n';
                 });
             } else if (ownSocials.data?.tiktokFollowers || ownSocials.data?.tiktokVideos) {
-                // Profile stats available but no individual videos
-                ownSocialsBlock += `\n### TikTok Videos: ⚠️ No se pudieron cargar los videos individuales de TikTok debido a restricciones del API.\n`;
-                ownSocialsBlock += `IMPORTANTE: Tienes los datos del perfil (${ownSocials.data.tiktokFollowers || 0} followers, ${ownSocials.data.tiktokLikes || 0} likes, ${ownSocials.data.tiktokVideos || 0} videos).\n`;
-                ownSocialsBlock += `Si el usuario te pide analizar un video viral de TikTok, pídele que pegue el enlace del video aquí en el chat y podrás analizarlo.\n`;
+                ownSocialsBlock += `\n### TikTok Videos: ⚠️ Los videos aún se están procesando. Se tienen las estadísticas generales del perfil.\n`;
+                ownSocialsBlock += `Usa estos datos: ${ownSocials.data.tiktokFollowers || 0} followers, ${ownSocials.data.tiktokLikes || 0} likes, ${ownSocials.data.tiktokVideos || 0} videos.\n`;
+                ownSocialsBlock += `Dile al usuario que los videos se están procesando y que vuelva a preguntar en unos minutos.\n`;
             }
             ownSocialsBlock += '\n';
         }

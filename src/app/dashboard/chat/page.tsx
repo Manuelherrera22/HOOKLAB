@@ -35,6 +35,7 @@ export default function ChatPage() {
         body: {
             data: {
                 accountName: user?.name,
+                accountId: user?.id,
                 references: activeReferences,
                 knowledge: knowledge,
                 ownSocials: {
