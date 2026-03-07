@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useStore } from "@/store/useStore";
 import {
     Calendar as CalendarIcon, Clock, Send, Plus, Trash2,
@@ -36,6 +37,7 @@ const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", 
 
 export default function CalendarPage() {
     const user = useStore((s) => s.user);
+    const searchParams = useSearchParams();
     const [posts, setPosts] = useState<ScheduledPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -61,6 +63,18 @@ export default function CalendarPage() {
     useEffect(() => {
         if (user?.id) loadPosts();
     }, [user?.id]);
+
+    // Pre-fill from Studio pipeline
+    useEffect(() => {
+        const caption = searchParams.get('caption');
+        const platform = searchParams.get('platform');
+        if (caption) {
+            setNewCaption(decodeURIComponent(caption));
+            setNewDate(new Date().toISOString().split('T')[0]);
+            if (platform) setNewPlatforms([platform]);
+            setShowNewPost(true);
+        }
+    }, [searchParams]);
 
     const loadPosts = async () => {
         if (!user?.id) return;

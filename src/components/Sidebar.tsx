@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LogOut, Menu, X, Brain, CalendarDays, FlaskConical, Bell, Clapperboard, MessageSquare, Hexagon, BookOpen } from "lucide-react";
+import { Home, LogOut, Menu, X, Brain, CalendarDays, FlaskConical, Bell, Palette, MessageSquare, Hexagon, BookOpen } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { useState, useEffect } from "react";
 
 const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },
     { name: "Intelligence", href: "/dashboard/intel", icon: Brain, beta: true },
-    { name: "Studio", href: "/dashboard/studio", icon: Clapperboard, beta: true },
+    { name: "Studio", href: "/dashboard/studio", icon: Palette, beta: true },
     { name: "Tools", href: "/dashboard/tools", icon: FlaskConical, beta: true },
     { name: "Calendar", href: "/dashboard/calendar", icon: CalendarDays, beta: true },
     { name: "AI Script Chat", href: "/dashboard/chat", icon: MessageSquare },

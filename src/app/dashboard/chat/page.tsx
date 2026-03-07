@@ -4,6 +4,7 @@ import { useStore, ChatMessage } from "@/store/useStore";
 import { useChat, Message } from "ai/react";
 import { Hexagon, User as UserIcon, Send, Settings, Check, X, Sparkles, Trash2, Paperclip, Mic, MicOff, Image as ImageIcon, FileText, XCircle, MessageSquare } from "lucide-react";
 import { useRef, useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 interface FileAttachment {
@@ -32,6 +33,8 @@ export default function ChatPage() {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const searchParams = useSearchParams();
+    const pipelineHandled = useRef(false);
 
     // Custom message state for handling file uploads
     const [customInput, setCustomInput] = useState('');
@@ -79,6 +82,17 @@ export default function ChatPage() {
             setChatMessages(toStore);
         }
     }, [messages, isLoading, setChatMessages]);
+
+    // Auto-send prompt from Studio pipeline
+    useEffect(() => {
+        const prompt = searchParams.get('prompt');
+        if (prompt && !pipelineHandled.current && append) {
+            pipelineHandled.current = true;
+            setTimeout(() => {
+                append({ role: 'user', content: decodeURIComponent(prompt) });
+            }, 500);
+        }
+    }, [searchParams, append]);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

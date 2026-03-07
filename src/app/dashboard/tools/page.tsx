@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { useStore } from "@/store/useStore";
 import {
     Gauge, Loader2, Sparkles, Zap, HelpCircle, Flame,
@@ -58,8 +59,18 @@ const gradeColors: Record<string, string> = {
 
 export default function ToolsPage() {
     const user = useStore((s) => s.user);
+    const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState("viral");
     const username = user?.ownTiktok?.replace("@", "") || "";
+
+    // Pre-fill from Studio pipeline
+    useEffect(() => {
+        const hook = searchParams.get('hook');
+        const caption = searchParams.get('caption');
+        if (hook) setHookText(hook);
+        if (caption) setCaptionText(caption);
+        if (hook || caption) setActiveTab('viral');
+    }, [searchParams]);
 
     // Viral Score state
     const [hookText, setHookText] = useState("");
