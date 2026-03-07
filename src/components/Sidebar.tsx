@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LogOut, Menu, X, Brain, CalendarDays, FlaskConical, Bell, Clapperboard, MessageSquare, Hexagon } from "lucide-react";
+import { Home, LogOut, Menu, X, Brain, CalendarDays, FlaskConical, Bell, Clapperboard, MessageSquare, Hexagon, BookOpen } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { useState, useEffect } from "react";
 
@@ -13,6 +13,7 @@ const navigation = [
     { name: "Tools", href: "/dashboard/tools", icon: FlaskConical, beta: true },
     { name: "Calendar", href: "/dashboard/calendar", icon: CalendarDays, beta: true },
     { name: "AI Script Chat", href: "/dashboard/chat", icon: MessageSquare },
+    { name: "Guide", href: "/dashboard/guide", icon: BookOpen },
 ];
 
 export function Sidebar() {

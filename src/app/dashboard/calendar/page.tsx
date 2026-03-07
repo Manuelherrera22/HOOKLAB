@@ -23,12 +23,12 @@ interface ScheduledPost {
 }
 
 const platformIcons: Record<string, { icon: string; color: string }> = {
-    instagram: { icon: "📸", color: "bg-pink-500/10 text-pink-400 border-pink-500/30" },
-    tiktok: { icon: "📱", color: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30" },
-    youtube: { icon: "🎬", color: "bg-red-500/10 text-red-400 border-red-500/30" },
-    facebook: { icon: "📘", color: "bg-blue-500/10 text-blue-400 border-blue-500/30" },
-    twitter: { icon: "🐦", color: "bg-sky-500/10 text-sky-400 border-sky-500/30" },
-    linkedin: { icon: "💼", color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30" },
+    instagram: { icon: "📸", color: "bg-white/5 text-neutral-400 border-white/10" },
+    tiktok: { icon: "📱", color: "bg-white/5 text-neutral-400 border-white/10" },
+    youtube: { icon: "🎬", color: "bg-white/5 text-neutral-400 border-white/10" },
+    facebook: { icon: "📘", color: "bg-white/5 text-neutral-400 border-white/10" },
+    twitter: { icon: "🐦", color: "bg-white/5 text-neutral-400 border-white/10" },
+    linkedin: { icon: "💼", color: "bg-white/5 text-neutral-400 border-white/10" },
 };
 
 const daysOfWeek = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -166,7 +166,7 @@ export default function CalendarPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-2">
-                        <CalendarIcon className="w-7 h-7 text-violet-400" /> Content Calendar
+                        <CalendarIcon className="w-7 h-7 text-neutral-400" /> Content Calendar
                     </h1>
                     <p className="text-neutral-400 text-sm">Schedule, publish & automate your content across all platforms.</p>
                 </div>
@@ -176,7 +176,7 @@ export default function CalendarPage() {
                         <Settings className="w-4 h-4" /> Connect Accounts
                     </button>
                     <button onClick={() => { setShowNewPost(true); setNewDate(new Date().toISOString().split("T")[0]); }}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-500">
+                        className="flex items-center gap-1.5 px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-neutral-200">
                         <Plus className="w-4 h-4" /> New Post
                     </button>
                 </div>
@@ -184,27 +184,27 @@ export default function CalendarPage() {
 
             {/* Settings Panel */}
             {showSettings && (
-                <div className="bg-card border border-amber-500/20 rounded-2xl p-5 space-y-4 animate-in fade-in">
+                <div className="bg-card border border-white/10 rounded-2xl p-5 space-y-4 animate-in fade-in">
                     <div className="flex items-center gap-2 mb-2">
-                        <Link2 className="w-5 h-5 text-amber-400" />
+                        <Link2 className="w-5 h-5 text-neutral-400" />
                         <h2 className="text-base font-bold text-white">Connect Social Accounts</h2>
                     </div>
                     <p className="text-xs text-neutral-400">
-                        Use <a href="https://app.ayrshare.com" target="_blank" className="text-amber-400 underline">Ayrshare</a> to connect your social accounts.
+                        Use <a href="https://app.ayrshare.com" target="_blank" className="text-neutral-300 underline">Ayrshare</a> to connect your social accounts.
                         Sign up free → Connect IG, TikTok, YouTube → Copy your API key below.
                     </p>
                     <div className="flex gap-2">
                         <input value={ayrshareKey} onChange={e => setAyrshareKey(e.target.value)}
                             placeholder="Paste your Ayrshare API Key"
                             type="password"
-                            className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50" />
+                            className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20" />
                         <button onClick={connectProfiles} disabled={!ayrshareKey || profilesLoading}
-                            className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-500 disabled:opacity-50">
+                            className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-neutral-200 disabled:opacity-50">
                             {profilesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
                         </button>
                     </div>
                     {profiles && (
-                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-xs text-emerald-400">
+                        <div className="bg-white/5 border border-white/10 rounded-lg p-3 text-xs text-neutral-300">
                             ✅ Connected! Profiles: {JSON.stringify(profiles).slice(0, 200)}
                         </div>
                     )}
@@ -242,13 +242,13 @@ export default function CalendarPage() {
 
                         return (
                             <button key={day} onClick={() => setSelectedDate(new Date(year, month, day))}
-                                className={`relative p-1 min-h-[60px] rounded-lg border text-left transition-all hover:border-violet-500/30
-                                    ${isToday ? "border-violet-500/50 bg-violet-500/5" : isSelected ? "border-fuchsia-500/50 bg-fuchsia-500/5" : "border-neutral-800/50 bg-neutral-900/30"}`}>
-                                <span className={`text-xs font-medium ${isToday ? "text-violet-400" : "text-neutral-500"}`}>{day}</span>
+                                className={`relative p-1 min-h-[60px] rounded-lg border text-left transition-all hover:border-white/20
+                                    ${isToday ? "border-white/30 bg-white/5" : isSelected ? "border-white/20 bg-white/5" : "border-neutral-800/50 bg-neutral-900/30"}`}>
+                                <span className={`text-xs font-medium ${isToday ? "text-white" : "text-neutral-500"}`}>{day}</span>
                                 {dayPosts.length > 0 && (
                                     <div className="mt-0.5 space-y-0.5">
                                         {dayPosts.slice(0, 2).map(p => (
-                                            <div key={p.id} className={`text-[8px] px-1 py-0.5 rounded truncate ${p.status === "published" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
+                                            <div key={p.id} className={`text-[8px] px-1 py-0.5 rounded truncate ${p.status === "published" ? "bg-white/10 text-neutral-300" : "bg-white/5 text-neutral-400"}`}>
                                                 {p.platforms.map(pp => platformIcons[pp]?.icon || "📦").join("")} {p.concept_title || p.caption.slice(0, 15)}
                                             </div>
                                         ))}
@@ -269,7 +269,7 @@ export default function CalendarPage() {
                             {selectedDate.getDate()} {months[selectedDate.getMonth()]} {selectedDate.getFullYear()}
                         </h3>
                         <button onClick={() => { setShowNewPost(true); setNewDate(selectedDate.toISOString().split("T")[0]); }}
-                            className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"><Plus className="w-3 h-3" /> Add Post</button>
+                            className="text-xs text-neutral-400 hover:text-neutral-300 flex items-center gap-1"><Plus className="w-3 h-3" /> Add Post</button>
                     </div>
                     {getPostsForDay(selectedDate.getDate()).length === 0 ? (
                         <p className="text-xs text-neutral-500 py-4 text-center">No posts scheduled for this day</p>
@@ -284,7 +284,7 @@ export default function CalendarPage() {
                                                     {platformIcons[pp]?.icon} {pp}
                                                 </span>
                                             ))}
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${p.status === "published" ? "bg-emerald-500/10 text-emerald-400" : p.status === "failed" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"}`}>
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${p.status === "published" ? "bg-white/10 text-neutral-300" : p.status === "failed" ? "bg-red-500/10 text-red-400" : "bg-white/5 text-neutral-400"}`}>
                                                 {p.status}
                                             </span>
                                         </div>
@@ -299,7 +299,7 @@ export default function CalendarPage() {
                                     </div>
                                     {p.concept_title && <p className="text-xs font-medium text-white mb-1">🎬 {p.concept_title}</p>}
                                     <p className="text-xs text-neutral-400 line-clamp-2">{p.caption}</p>
-                                    {p.video_url && <p className="text-[10px] text-violet-400 mt-1 flex items-center gap-1"><Video className="w-3 h-3" /> Video attached</p>}
+                                    {p.video_url && <p className="text-[10px] text-neutral-400 mt-1 flex items-center gap-1"><Video className="w-3 h-3" /> Video attached</p>}
                                 </div>
                             ))}
                         </div>
@@ -309,9 +309,9 @@ export default function CalendarPage() {
 
             {/* Upcoming Posts */}
             <div className="bg-card border border-border rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Clock className="w-4 h-4 text-amber-400" /> Upcoming Posts</h3>
+                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Clock className="w-4 h-4 text-neutral-400" /> Upcoming Posts</h3>
                 {loading ? (
-                    <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-violet-400" /></div>
+                    <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-neutral-400" /></div>
                 ) : posts.filter(p => p.status === "scheduled").length === 0 ? (
                     <p className="text-xs text-neutral-500 py-4 text-center">No scheduled posts. Click &quot;New Post&quot; to create one.</p>
                 ) : (
@@ -321,7 +321,7 @@ export default function CalendarPage() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1 mb-1">
                                         {p.platforms.map(pp => <span key={pp} className="text-xs">{platformIcons[pp]?.icon}</span>)}
-                                        {p.quality_score && <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-full">{p.quality_score}/100</span>}
+                                        {p.quality_score && <span className="text-[9px] bg-white/10 text-neutral-300 px-1.5 py-0.5 rounded-full">{p.quality_score}/100</span>}
                                     </div>
                                     <p className="text-xs text-neutral-300 truncate">{p.concept_title || p.caption.slice(0, 60)}</p>
                                 </div>
@@ -340,8 +340,8 @@ export default function CalendarPage() {
             {/* New Post Modal */}
             {showNewPost && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowNewPost(false)}>
-                    <div className="bg-card border border-violet-500/20 rounded-2xl p-6 w-full max-w-lg space-y-4 animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
-                        <h2 className="text-lg font-bold text-white flex items-center gap-2"><Send className="w-5 h-5 text-violet-400" /> New Post</h2>
+                    <div className="bg-card border border-white/10 rounded-2xl p-6 w-full max-w-lg space-y-4 animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2"><Send className="w-5 h-5 text-neutral-400" /> New Post</h2>
 
                         {/* Platforms */}
                         <div>
@@ -361,35 +361,35 @@ export default function CalendarPage() {
                             <label className="text-[10px] text-neutral-500 uppercase mb-1 block">Caption</label>
                             <textarea value={newCaption} onChange={e => setNewCaption(e.target.value)} rows={4}
                                 placeholder="Write your post caption..."
-                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50 resize-none" />
+                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none" />
                         </div>
 
                         {/* Hashtags */}
                         <input value={newHashtags} onChange={e => setNewHashtags(e.target.value)}
                             placeholder="#hashtag1 #hashtag2 #hashtag3"
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+                            className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20" />
 
                         {/* Video URL */}
                         <input value={newVideoUrl} onChange={e => setNewVideoUrl(e.target.value)}
                             placeholder="Video URL (optional — paste from Video Studio)"
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+                            className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20" />
 
                         {/* Date/Time */}
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="text-[10px] text-neutral-500 uppercase mb-1 block">Date</label>
                                 <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
-                                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+                                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20" />
                             </div>
                             <div>
                                 <label className="text-[10px] text-neutral-500 uppercase mb-1 block">Time</label>
                                 <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)}
-                                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+                                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20" />
                             </div>
                         </div>
 
                         {publishResult && (
-                            <div className={`text-sm p-2 rounded-lg ${publishResult.startsWith("✅") ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}`}>
+                            <div className={`text-sm p-2 rounded-lg ${publishResult.startsWith("✅") ? "bg-white/5 text-neutral-300" : "bg-red-500/10 text-red-400"}`}>
                                 {publishResult}
                             </div>
                         )}
@@ -398,12 +398,12 @@ export default function CalendarPage() {
                         <div className="flex gap-2">
                             <button onClick={() => setShowNewPost(false)} className="px-4 py-2 bg-neutral-800 text-neutral-400 rounded-lg text-sm hover:bg-neutral-700 border border-neutral-700">Cancel</button>
                             <button onClick={() => createPost(false)} disabled={publishing || !newCaption.trim() || !newDate}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-500 disabled:opacity-50">
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-neutral-200 disabled:opacity-50">
                                 {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />} Schedule
                             </button>
                             {ayrshareKey && (
                                 <button onClick={() => createPost(true)} disabled={publishing || !newCaption.trim()}
-                                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-500 disabled:opacity-50">
+                                    className="flex items-center gap-2 px-4 py-2 bg-neutral-700 text-white rounded-lg text-sm font-medium hover:bg-neutral-600 disabled:opacity-50">
                                     {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Publish Now
                                 </button>
                             )}

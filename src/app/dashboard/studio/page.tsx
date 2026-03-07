@@ -28,11 +28,11 @@ interface VideoConcept {
 }
 
 const platforms = [
-    { id: "tiktok", label: "TikTok", icon: "📱", desc: "9:16 • 15-60s", color: "border-pink-500/30 bg-pink-500/5" },
-    { id: "reels", label: "Reels", icon: "📸", desc: "9:16 • 15-30s", color: "border-purple-500/30 bg-purple-500/5" },
-    { id: "shorts", label: "Shorts", icon: "▶️", desc: "9:16 • 30-60s", color: "border-red-500/30 bg-red-500/5" },
-    { id: "youtube", label: "YouTube", icon: "🎬", desc: "16:9 • 3-10min", color: "border-red-600/30 bg-red-600/5" },
-    { id: "stories", label: "Stories", icon: "⏰", desc: "9:16 • 15s", color: "border-amber-500/30 bg-amber-500/5" },
+    { id: "tiktok", label: "TikTok", icon: "📱", desc: "9:16 • 15-60s", color: "border-white/20 bg-white/5" },
+    { id: "reels", label: "Reels", icon: "📸", desc: "9:16 • 15-30s", color: "border-white/20 bg-white/5" },
+    { id: "shorts", label: "Shorts", icon: "▶️", desc: "9:16 • 30-60s", color: "border-white/20 bg-white/5" },
+    { id: "youtube", label: "YouTube", icon: "🎬", desc: "16:9 • 3-10min", color: "border-white/20 bg-white/5" },
+    { id: "stories", label: "Stories", icon: "⏰", desc: "9:16 • 15s", color: "border-white/20 bg-white/5" },
 ];
 
 const styles = [
@@ -46,9 +46,9 @@ const styles = [
 ];
 
 function ScoreBadge({ score }: { score: number }) {
-    const color = score >= 80 ? "text-emerald-400 bg-emerald-500/15 border-emerald-500/30"
-        : score >= 60 ? "text-amber-400 bg-amber-500/15 border-amber-500/30"
-            : "text-red-400 bg-red-500/15 border-red-500/30";
+    const color = score >= 80 ? "text-neutral-200 bg-white/10 border-white/20"
+        : score >= 60 ? "text-neutral-300 bg-white/5 border-white/15"
+            : "text-neutral-400 bg-white/5 border-white/10";
     return (
         <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-bold ${color}`}>
             <TrendingUp className="w-3 h-3" /> {score}/100
@@ -214,7 +214,7 @@ export default function StudioPage() {
             {/* Header */}
             <div>
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-2">
-                    <Clapperboard className="w-7 h-7 text-violet-400" /> Video Studio Pro
+                    <Clapperboard className="w-7 h-7 text-neutral-400" /> Video Studio Pro
                 </h1>
                 <p className="text-neutral-400 text-sm">Intelligence-driven AI video production for maximum impact.</p>
             </div>
@@ -224,8 +224,8 @@ export default function StudioPage() {
                 {stepLabels.map((label, i) => (
                     <button key={i} onClick={() => (i + 1 <= step || concepts.length > 0) && setStep(i + 1)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${step === i + 1
-                            ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-                            : step > i + 1 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            ? "bg-white/10 text-neutral-200 border border-white/20"
+                            : step > i + 1 ? "bg-white/5 text-neutral-300 border border-white/10"
                                 : "bg-neutral-900 text-neutral-600 border border-neutral-800"}`}>
                         {step > i + 1 ? <Check className="w-4 h-4" /> : <span className="w-5 h-5 rounded-full bg-neutral-800 text-[10px] flex items-center justify-center font-bold">{i + 1}</span>}
                         {label}
@@ -239,21 +239,21 @@ export default function StudioPage() {
                     {/* Brand Analyzer */}
                     <div className="bg-card border border-border rounded-2xl p-5">
                         <div className="flex items-center gap-2 mb-3">
-                            <Globe className="w-4 h-4 text-cyan-400" />
+                            <Globe className="w-4 h-4 text-neutral-400" />
                             <span className="text-sm font-bold text-white">Brand Analyzer</span>
                             <span className="text-[10px] text-neutral-500">Optional — paste URL for context</span>
                         </div>
                         <div className="flex gap-2">
                             <input value={brandUrl} onChange={e => setBrandUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && analyzeBrand()}
                                 placeholder="https://example.com or social profile URL"
-                                className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/50" />
+                                className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20" />
                             <button onClick={analyzeBrand} disabled={brandLoading || !brandUrl.trim()}
-                                className="flex items-center gap-1.5 px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm font-medium hover:bg-cyan-500 disabled:opacity-50 transition-all">
+                                className="flex items-center gap-1.5 px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-neutral-200 disabled:opacity-50 transition-all">
                                 {brandLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />} Analyze
                             </button>
                         </div>
                         {brand && (
-                            <div className="mt-4 bg-gradient-to-r from-cyan-500/5 to-violet-500/5 border border-cyan-500/20 rounded-xl p-4 animate-in fade-in">
+                            <div className="mt-4 bg-white/5 border border-white/10 rounded-xl p-4 animate-in fade-in">
                                 <div className="flex items-center justify-between mb-2">
                                     <div><h3 className="text-base font-bold text-white">{brand.brandName}</h3>
                                         <p className="text-xs text-neutral-400">{brand.industry} • {brand.tone}</p></div>
@@ -267,7 +267,7 @@ export default function StudioPage() {
                                     <div className="flex flex-wrap gap-1.5 mt-2">
                                         {brand.suggestedVideoTopics.map((t, i) => (
                                             <button key={i} onClick={() => setTopic(t)}
-                                                className="text-[10px] bg-violet-500/10 text-violet-300 px-2 py-1 rounded-lg border border-violet-500/20 hover:bg-violet-500/20 transition-all">{t}</button>
+                                                className="text-[10px] bg-white/5 text-neutral-300 px-2 py-1 rounded-lg border border-white/10 hover:bg-white/10 transition-all">{t}</button>
                                         ))}
                                     </div>
                                 )}
@@ -295,7 +295,7 @@ export default function StudioPage() {
                             <div className="flex flex-wrap gap-2">
                                 {styles.map(s => (
                                     <button key={s.id} onClick={() => setStyle(s.id)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${style === s.id ? "bg-violet-500/20 text-violet-300 border border-violet-500/30" : "bg-neutral-900 text-neutral-400 border border-neutral-800 hover:text-neutral-300"}`}>
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${style === s.id ? "bg-white/10 text-neutral-200 border border-white/20" : "bg-neutral-900 text-neutral-400 border border-neutral-800 hover:text-neutral-300"}`}>
                                         {s.emoji} {s.label}
                                     </button>
                                 ))}
@@ -305,13 +305,13 @@ export default function StudioPage() {
                             <label className="text-xs text-neutral-500 uppercase tracking-wider mb-1 block">Topic / Idea</label>
                             <input value={topic} onChange={e => setTopic(e.target.value)}
                                 placeholder="e.g. 'Los 3 errores fatales en forex que nadie te dice'"
-                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20" />
                         </div>
                     </div>
 
                     {/* AI DIRECTOR BUTTON */}
                     <button onClick={async () => { await runDirector(); if (concepts.length === 0) return; setStep(2); }} disabled={directorLoading || !topic.trim()}
-                        className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 text-white rounded-2xl font-bold hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-500 transition-all disabled:opacity-50 shadow-lg shadow-violet-500/20 text-base">
+                        className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white text-black rounded-2xl font-bold hover:bg-neutral-200 transition-all disabled:opacity-50 shadow-lg shadow-white/10 text-base">
                         {directorLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
                         {directorLoading ? "AI Director analyzing data..." : "🧠 Launch AI Director"}
                     </button>
@@ -320,14 +320,14 @@ export default function StudioPage() {
                     {concepts.length > 0 && (
                         <div className="space-y-3 animate-in fade-in">
                             {directorNotes && (
-                                <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-3 text-xs text-violet-300 flex items-start gap-2">
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-neutral-300 flex items-start gap-2">
                                     <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0" /> {directorNotes}
                                 </div>
                             )}
                             <div className="grid gap-3">
                                 {concepts.map((c) => (
                                     <button key={c.id} onClick={() => { setSelectedConcept(c); setCustomPrompt(c.videoPrompt); setVideoMode(c.suggestedMode === "image-to-video" ? "image" : "text"); }}
-                                        className={`text-left bg-card border rounded-2xl p-4 transition-all hover:border-violet-500/40 ${selectedConcept?.id === c.id ? "border-violet-500/50 ring-1 ring-violet-500/20" : "border-border"}`}>
+                                        className={`text-left bg-card border rounded-2xl p-4 transition-all hover:border-white/30 ${selectedConcept?.id === c.id ? "border-white/40 ring-1 ring-white/10" : "border-border"}`}>
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs font-bold text-neutral-500">#{c.id}</span>
@@ -337,18 +337,18 @@ export default function StudioPage() {
                                         </div>
                                         <p className="text-xs text-neutral-400 mb-2 line-clamp-2">{c.videoPrompt}</p>
                                         <div className="flex flex-wrap gap-1.5">
-                                            <span className="text-[10px] bg-fuchsia-500/10 text-fuchsia-300 px-2 py-0.5 rounded-full">{c.mood}</span>
-                                            <span className="text-[10px] bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded-full">{c.cameraStyle}</span>
-                                            <span className="text-[10px] bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded-full">{c.lightingStyle}</span>
-                                            <span className="text-[10px] bg-violet-500/10 text-violet-300 px-2 py-0.5 rounded-full">{c.suggestedMode}</span>
+                                            <span className="text-[10px] bg-white/5 text-neutral-400 px-2 py-0.5 rounded-full">{c.mood}</span>
+                                            <span className="text-[10px] bg-white/5 text-neutral-400 px-2 py-0.5 rounded-full">{c.cameraStyle}</span>
+                                            <span className="text-[10px] bg-white/5 text-neutral-400 px-2 py-0.5 rounded-full">{c.lightingStyle}</span>
+                                            <span className="text-[10px] bg-white/5 text-neutral-400 px-2 py-0.5 rounded-full">{c.suggestedMode}</span>
                                         </div>
-                                        <p className="text-[10px] text-neutral-500 mt-2 flex items-center gap-1"><Zap className="w-3 h-3 text-amber-400" /> {c.impactReason}</p>
+                                        <p className="text-[10px] text-neutral-500 mt-2 flex items-center gap-1"><Zap className="w-3 h-3 text-neutral-400" /> {c.impactReason}</p>
                                     </button>
                                 ))}
                             </div>
                             {selectedConcept && (
                                 <button onClick={() => setStep(2)}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-500 transition-all text-sm">
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-semibold hover:bg-neutral-200 transition-all text-sm">
                                     Continue with &ldquo;{selectedConcept.title}&rdquo; <ArrowRight className="w-4 h-4" />
                                 </button>
                             )}
@@ -361,11 +361,11 @@ export default function StudioPage() {
             {step === 2 && selectedConcept && (
                 <div className="space-y-4">
                     {/* Selected Concept Summary */}
-                    <div className="bg-card border border-violet-500/20 rounded-2xl p-5">
+                    <div className="bg-card border border-white/10 rounded-2xl p-5">
                         <div className="flex items-center justify-between mb-3">
                             <div>
                                 <h2 className="text-base font-bold text-white flex items-center gap-2">
-                                    <Film className="w-5 h-5 text-violet-400" /> {selectedConcept.title}
+                                    <Film className="w-5 h-5 text-neutral-400" /> {selectedConcept.title}
                                 </h2>
                                 <p className="text-xs text-neutral-400 mt-0.5">{selectedConcept.mood} • {selectedConcept.cameraStyle} • {selectedConcept.lightingStyle}</p>
                             </div>
@@ -376,37 +376,37 @@ export default function StudioPage() {
                     {/* Video Mode Selector */}
                     <div className="grid grid-cols-2 gap-3">
                         <button onClick={() => setVideoMode("text")}
-                            className={`p-4 rounded-2xl border text-left transition-all ${videoMode === "text" ? "border-violet-500/50 bg-violet-500/5 ring-1 ring-violet-500/20" : "border-neutral-800 bg-card hover:border-neutral-700"}`}>
+                            className={`p-4 rounded-2xl border text-left transition-all ${videoMode === "text" ? "border-white/30 bg-white/5 ring-1 ring-white/10" : "border-neutral-800 bg-card hover:border-neutral-700"}`}>
                             <div className="flex items-center gap-2 mb-2">
-                                <Type className="w-5 h-5 text-violet-400" />
+                                <Type className="w-5 h-5 text-neutral-300" />
                                 <span className="text-sm font-bold text-white">Text → Video</span>
                             </div>
                             <p className="text-[10px] text-neutral-500">Fast generation from text prompt. AI creates everything from scratch.</p>
-                            <p className="text-[10px] text-emerald-400 mt-1">⚡ ~2 min • $0.25</p>
+                            <p className="text-[10px] text-neutral-400 mt-1">⚡ ~2 min • $0.25</p>
                         </button>
                         <button onClick={() => setVideoMode("image")}
-                            className={`p-4 rounded-2xl border text-left transition-all ${videoMode === "image" ? "border-fuchsia-500/50 bg-fuchsia-500/5 ring-1 ring-fuchsia-500/20" : "border-neutral-800 bg-card hover:border-neutral-700"}`}>
+                            className={`p-4 rounded-2xl border text-left transition-all ${videoMode === "image" ? "border-white/30 bg-white/5 ring-1 ring-white/10" : "border-neutral-800 bg-card hover:border-neutral-700"}`}>
                             <div className="flex items-center gap-2 mb-2">
-                                <ImagePlus className="w-5 h-5 text-fuchsia-400" />
+                                <ImagePlus className="w-5 h-5 text-neutral-300" />
                                 <span className="text-sm font-bold text-white">Image → Video</span>
-                                <span className="text-[9px] bg-fuchsia-500/20 text-fuchsia-300 px-1.5 py-0.5 rounded-full">PRO</span>
+                                <span className="text-[9px] bg-white/10 text-neutral-300 px-1.5 py-0.5 rounded-full">PRO</span>
                             </div>
                             <p className="text-[10px] text-neutral-500">Generate AI image first, then animate it. More control, higher quality.</p>
-                            <p className="text-[10px] text-amber-400 mt-1">⏱️ ~3 min • $0.30</p>
+                            <p className="text-[10px] text-neutral-400 mt-1">⏱️ ~3 min • $0.30</p>
                         </button>
                     </div>
 
                     {/* AI Engine Selector */}
                     <div className="bg-card border border-border rounded-2xl p-5">
                         <div className="flex items-center gap-2 mb-3">
-                            <Zap className="w-4 h-4 text-amber-400" />
+                            <Zap className="w-4 h-4 text-neutral-400" />
                             <span className="text-sm font-bold text-white">AI Engine</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                             {[
-                                { id: "kling-v3", name: "Kling V3", tier: "🏆 Best", desc: "Cinematic 4K, realistic physics", speed: "~3 min", badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" },
-                                { id: "wan-2.1", name: "Wan 2.1", tier: "⚡ Fast", desc: "Open-source powerhouse, great quality", speed: "~2 min", badge: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30" },
-                                { id: "minimax", name: "Minimax", tier: "💰 Budget", desc: "Decent quality, most affordable", speed: "~2 min", badge: "bg-neutral-500/10 text-neutral-400 border-neutral-500/30" },
+                                { id: "kling-v3", name: "Kling V3", tier: "🏆 Best", desc: "Cinematic 4K, realistic physics", speed: "~3 min", badge: "bg-white/10 text-neutral-200 border-white/20" },
+                                { id: "wan-2.1", name: "Wan 2.1", tier: "⚡ Fast", desc: "Open-source powerhouse, great quality", speed: "~2 min", badge: "bg-white/5 text-neutral-300 border-white/15" },
+                                { id: "minimax", name: "Minimax", tier: "💰 Budget", desc: "Decent quality, most affordable", speed: "~2 min", badge: "bg-white/5 text-neutral-400 border-white/10" },
                             ].map(m => (
                                 <button key={m.id} onClick={() => setSelectedModel(m.id)}
                                     className={`p-3 rounded-xl border text-left transition-all ${selectedModel === m.id ? `${m.badge} border-2 ring-1 ring-current/20` : "border-neutral-800 bg-neutral-900/50 hover:border-neutral-700"}`}>
@@ -423,9 +423,9 @@ export default function StudioPage() {
 
                     {/* Image Generation (Image Mode) */}
                     {videoMode === "image" && (
-                        <div className="bg-card border border-fuchsia-500/20 rounded-2xl p-5 space-y-3">
+                        <div className="bg-card border border-white/10 rounded-2xl p-5 space-y-3">
                             <div className="flex items-center gap-2 mb-2">
-                                <ImagePlus className="w-4 h-4 text-fuchsia-400" />
+                                <ImagePlus className="w-4 h-4 text-neutral-400" />
                                 <span className="text-sm font-bold text-white">First Frame Image</span>
                                 <span className="text-[10px] text-neutral-500">This image will be the starting frame of your video</span>
                             </div>
@@ -433,7 +433,7 @@ export default function StudioPage() {
 
                             {!generatedImage && (
                                 <button onClick={() => generateImage()} disabled={imageLoading}
-                                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white rounded-xl text-sm font-medium hover:from-fuchsia-500 hover:to-pink-500 disabled:opacity-50 transition-all">
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-white text-black rounded-xl text-sm font-medium hover:bg-neutral-200 disabled:opacity-50 transition-all">
                                     {imageLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
                                     {imageLoading ? "Generating image (~10s)..." : "Generate First Frame"}
                                 </button>
@@ -459,12 +459,12 @@ export default function StudioPage() {
                     {/* Video Prompt Editor */}
                     <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
                         <div className="flex items-center gap-2">
-                            <Camera className="w-4 h-4 text-cyan-400" />
+                            <Camera className="w-4 h-4 text-neutral-400" />
                             <span className="text-sm font-bold text-white">Video Prompt</span>
                             <span className="text-[10px] text-neutral-500">Edit or use as-is</span>
                         </div>
                         <textarea value={customPrompt} onChange={e => setCustomPrompt(e.target.value)} rows={4}
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50 resize-none" />
+                            className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none" />
                     </div>
 
                     {/* Action Buttons */}
@@ -472,7 +472,7 @@ export default function StudioPage() {
                         <button onClick={() => setStep(1)} className="px-4 py-3 bg-neutral-800 text-neutral-400 rounded-xl text-sm hover:bg-neutral-700 transition-all border border-neutral-700">← Back</button>
                         <button onClick={() => { setStep(3); generateVideo(); }}
                             disabled={videoMode === "image" && !generatedImage}
-                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 text-white rounded-xl font-bold hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-500 disabled:opacity-50 transition-all shadow-lg shadow-violet-500/20 text-sm">
+                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-bold hover:bg-neutral-200 disabled:opacity-50 transition-all shadow-lg shadow-white/10 text-sm">
                             <Video className="w-5 h-5" /> Generate Video <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>
@@ -484,10 +484,10 @@ export default function StudioPage() {
                 <div className="space-y-4">
                     {/* Selected concept info */}
                     {selectedConcept && (
-                        <div className="bg-card border border-violet-500/20 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="bg-card border border-white/10 rounded-2xl p-4 flex items-center justify-between">
                             <div>
                                 <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                                    <Film className="w-4 h-4 text-violet-400" /> {selectedConcept.title}
+                                    <Film className="w-4 h-4 text-neutral-400" /> {selectedConcept.title}
                                 </h2>
                                 <p className="text-[10px] text-neutral-500 mt-0.5">
                                     {videoMode === "image" ? "🖼️ Image → Video" : "📝 Text → Video"} • {platform.toUpperCase()} • {selectedConcept.mood}
@@ -495,7 +495,7 @@ export default function StudioPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <ScoreBadge score={selectedConcept.qualityScore} />
-                                <button onClick={saveToLibrary} className="flex items-center gap-1 px-3 py-1.5 bg-violet-600 text-white rounded-lg text-xs hover:bg-violet-500">
+                                <button onClick={saveToLibrary} className="flex items-center gap-1 px-3 py-1.5 bg-white text-black rounded-lg text-xs hover:bg-neutral-200">
                                     {copied === "saved" ? <Check className="w-3 h-3" /> : <Save className="w-3 h-3" />} Save
                                 </button>
                             </div>
@@ -504,11 +504,11 @@ export default function StudioPage() {
 
                     {/* Loading State */}
                     {videoLoading && (
-                        <div className="bg-card border border-fuchsia-500/10 rounded-2xl p-10 text-center">
+                        <div className="bg-card border border-white/5 rounded-2xl p-10 text-center">
                             <div className="relative w-20 h-20 mx-auto mb-5">
-                                <div className="absolute inset-0 rounded-full border-2 border-fuchsia-500/20 border-t-fuchsia-400 animate-spin" />
-                                <div className="absolute inset-2 rounded-full border-2 border-violet-500/20 border-b-violet-400 animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }} />
-                                <Video className="w-7 h-7 text-fuchsia-400 absolute inset-0 m-auto" />
+                                <div className="absolute inset-0 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
+                                <div className="absolute inset-2 rounded-full border-2 border-white/5 border-b-white/30 animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }} />
+                                <Video className="w-7 h-7 text-neutral-300 absolute inset-0 m-auto" />
                             </div>
                             <p className="text-white font-semibold text-lg">Creating your video...</p>
                             <p className="text-sm text-neutral-400 mt-2">{videoProgress}</p>
@@ -534,14 +534,14 @@ export default function StudioPage() {
 
                     {/* Video Preview */}
                     {videoUrl && (
-                        <div className="bg-card border border-emerald-500/20 rounded-2xl p-5 animate-in fade-in duration-500">
+                        <div className="bg-card border border-white/10 rounded-2xl p-5 animate-in fade-in duration-500">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                                    <Play className="w-5 h-5 text-emerald-400" /> Your Video is Ready!
+                                    <Play className="w-5 h-5 text-neutral-300" /> Your Video is Ready!
                                 </h3>
                                 <div className="flex gap-2">
                                     <a href={videoUrl} download target="_blank"
-                                        className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-500">
+                                        className="flex items-center gap-1.5 px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-neutral-200">
                                         <Download className="w-4 h-4" /> Download MP4
                                     </a>
                                     <button onClick={generateVideo}
@@ -559,17 +559,17 @@ export default function StudioPage() {
                             {selectedConcept && (
                                 <div className="mt-4 grid grid-cols-3 gap-3">
                                     <div className="bg-neutral-900 rounded-lg p-3 text-center">
-                                        <TrendingUp className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
+                                        <TrendingUp className="w-4 h-4 text-neutral-400 mx-auto mb-1" />
                                         <p className="text-lg font-bold text-white">{selectedConcept.qualityScore}</p>
                                         <p className="text-[10px] text-neutral-500">Impact Score</p>
                                     </div>
                                     <div className="bg-neutral-900 rounded-lg p-3 text-center">
-                                        <Clock className="w-4 h-4 text-amber-400 mx-auto mb-1" />
+                                        <Clock className="w-4 h-4 text-neutral-400 mx-auto mb-1" />
                                         <p className="text-sm font-bold text-white">{selectedConcept.bestPostingTime}</p>
                                         <p className="text-[10px] text-neutral-500">Best Time</p>
                                     </div>
                                     <div className="bg-neutral-900 rounded-lg p-3 text-center">
-                                        <Star className="w-4 h-4 text-fuchsia-400 mx-auto mb-1" />
+                                        <Star className="w-4 h-4 text-neutral-400 mx-auto mb-1" />
                                         <p className="text-sm font-bold text-white capitalize">{selectedConcept.mood}</p>
                                         <p className="text-[10px] text-neutral-500">Mood</p>
                                     </div>
@@ -579,7 +579,7 @@ export default function StudioPage() {
                             {selectedConcept?.hashtags && (
                                 <div className="flex flex-wrap gap-1 mt-3">
                                     {selectedConcept.hashtags.map((h, i) => (
-                                        <span key={i} className="text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">#{h.replace("#", "")}</span>
+                                        <span key={i} className="text-[10px] text-neutral-400 bg-white/5 px-1.5 py-0.5 rounded">#{h.replace("#", "")}</span>
                                     ))}
                                 </div>
                             )}
@@ -591,7 +591,7 @@ export default function StudioPage() {
                         <div className="flex gap-3">
                             <button onClick={() => setStep(2)} className="px-4 py-2.5 bg-neutral-800 text-neutral-400 rounded-xl text-sm hover:bg-neutral-700 border border-neutral-700">← Back to Studio</button>
                             <button onClick={() => { setStep(1); setConcepts([]); setSelectedConcept(null); setVideoUrl(null); setGeneratedImage(null); setVideoError(""); }}
-                                className="px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm hover:bg-violet-500">🎬 New Video</button>
+                                className="px-4 py-2.5 bg-white text-black rounded-xl text-sm hover:bg-neutral-200">🎬 New Video</button>
                         </div>
                     )}
                 </div>

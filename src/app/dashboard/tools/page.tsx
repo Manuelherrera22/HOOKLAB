@@ -39,21 +39,21 @@ interface SavedScript {
 }
 
 const hookColors: Record<string, string> = {
-    shock: "bg-red-500/20 text-red-400",
-    question: "bg-blue-500/20 text-blue-400",
-    challenge: "bg-amber-500/20 text-amber-400",
-    controversy: "bg-purple-500/20 text-purple-400",
-    authority: "bg-emerald-500/20 text-emerald-400",
-    curiosity: "bg-cyan-500/20 text-cyan-400",
+    shock: "bg-white/10 text-neutral-300",
+    question: "bg-white/10 text-neutral-300",
+    challenge: "bg-white/10 text-neutral-300",
+    controversy: "bg-white/10 text-neutral-300",
+    authority: "bg-white/10 text-neutral-300",
+    curiosity: "bg-white/10 text-neutral-300",
 };
 
 const gradeColors: Record<string, string> = {
-    S: "from-amber-400 to-yellow-300 text-black",
-    A: "from-emerald-500 to-green-400 text-white",
-    B: "from-blue-500 to-cyan-400 text-white",
-    C: "from-amber-500 to-orange-400 text-white",
-    D: "from-red-500 to-orange-500 text-white",
-    F: "from-red-700 to-red-500 text-white",
+    S: "from-neutral-200 to-neutral-400 text-black",
+    A: "from-neutral-300 to-neutral-500 text-black",
+    B: "from-neutral-400 to-neutral-600 text-white",
+    C: "from-neutral-500 to-neutral-600 text-white",
+    D: "from-neutral-600 to-neutral-700 text-white",
+    F: "from-neutral-700 to-neutral-800 text-white",
 };
 
 export default function ToolsPage() {
@@ -160,16 +160,16 @@ export default function ToolsPage() {
     };
 
     const tabs = [
-        { id: "viral", label: "Viral Score", icon: Gauge, color: "text-amber-400" },
-        { id: "ab", label: "A/B Hooks", icon: FlaskConical, color: "text-fuchsia-400" },
-        { id: "library", label: "Script Library", icon: BookOpen, color: "text-cyan-400" },
+        { id: "viral", label: "Viral Score", icon: Gauge, color: "text-neutral-300" },
+        { id: "ab", label: "A/B Hooks", icon: FlaskConical, color: "text-neutral-300" },
+        { id: "library", label: "Script Library", icon: BookOpen, color: "text-neutral-300" },
     ];
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-2">
-                    <FlaskConical className="w-7 h-7 text-fuchsia-400" />
+                    <FlaskConical className="w-7 h-7 text-neutral-400" />
                     Creator Tools
                 </h1>
                 <p className="text-neutral-400 text-sm">AI-powered tools to maximize your content performance.</p>
@@ -192,22 +192,22 @@ export default function ToolsPage() {
                 <div className="space-y-4">
                     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
                         <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                            <Gauge className="w-5 h-5 text-amber-400" /> Predict Virality
+                            <Gauge className="w-5 h-5 text-neutral-400" /> Predict Virality
                         </h3>
                         <div>
                             <label className="text-xs text-neutral-500 uppercase tracking-wider mb-1 block">Hook (first 3 seconds)</label>
                             <textarea value={hookText} onChange={e => setHookText(e.target.value)} rows={2}
                                 placeholder="e.g. 'Llevo 8 años en trading y nunca te contaron este secreto...'"
-                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none" />
+                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none" />
                         </div>
                         <div>
                             <label className="text-xs text-neutral-500 uppercase tracking-wider mb-1 block">Caption</label>
                             <textarea value={captionText} onChange={e => setCaptionText(e.target.value)} rows={2}
                                 placeholder="Full video caption with emojis and hashtags..."
-                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none" />
+                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none" />
                         </div>
                         <button onClick={runViralScore} disabled={viralLoading || (!hookText.trim() && !captionText.trim())}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl font-medium hover:from-amber-500 hover:to-orange-500 transition-all disabled:opacity-50 shadow-lg shadow-amber-500/20">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-white text-black rounded-xl font-medium hover:bg-neutral-200 transition-all disabled:opacity-50 shadow-lg shadow-white/10">
                             {viralLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                             {viralLoading ? "Analyzing..." : "Predict Score"}
                         </button>
@@ -220,7 +220,7 @@ export default function ToolsPage() {
                                     { hook: "Este error me costó $10,000 dólares en UN solo día", cap: "No cometas este error!! ⚠️ #tradinglife #cripto" },
                                 ].map((ex, i) => (
                                     <button key={i} onClick={() => { setHookText(ex.hook); setCaptionText(ex.cap); }}
-                                        className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-lg hover:bg-amber-500/20 transition-colors truncate max-w-[200px]">
+                                        className="text-[10px] bg-white/5 text-neutral-400 border border-white/10 px-2 py-1 rounded-lg hover:bg-white/10 transition-colors truncate max-w-[200px]">
                                         {ex.hook.slice(0, 35)}...
                                     </button>
                                 ))}
@@ -236,7 +236,7 @@ export default function ToolsPage() {
                                     {viralResult.grade}
                                 </div>
                                 <p className="text-5xl font-black text-white mb-1">{viralResult.score}<span className="text-lg text-neutral-500">/100</span></p>
-                                <p className="text-sm text-neutral-400">Predicted Views: <span className="text-amber-400 font-semibold">{viralResult.predictedViews}</span></p>
+                                <p className="text-sm text-neutral-400">Predicted Views: <span className="text-neutral-200 font-semibold">{viralResult.predictedViews}</span></p>
                             </div>
 
                             {/* Breakdown */}
@@ -251,11 +251,11 @@ export default function ToolsPage() {
                             </div>
 
                             {/* Suggestions */}
-                            <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
-                                <p className="text-xs text-amber-400 font-semibold mb-2">IMPROVEMENTS TO BOOST SCORE</p>
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                                <p className="text-xs text-neutral-300 font-semibold mb-2">IMPROVEMENTS TO BOOST SCORE</p>
                                 {viralResult.suggestions.map((s, i) => (
                                     <div key={i} className="flex items-start gap-2 mb-1.5">
-                                        <Lightbulb className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+                                        <Lightbulb className="w-3.5 h-3.5 text-neutral-400 mt-0.5 shrink-0" />
                                         <p className="text-sm text-neutral-300">{s}</p>
                                     </div>
                                 ))}
@@ -270,17 +270,17 @@ export default function ToolsPage() {
                 <div className="space-y-4">
                     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
                         <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                            <FlaskConical className="w-5 h-5 text-fuchsia-400" /> Generate Hook Variations
+                            <FlaskConical className="w-5 h-5 text-neutral-400" /> Generate Hook Variations
                         </h3>
                         <div>
                             <label className="text-xs text-neutral-500 uppercase tracking-wider mb-1 block">Topic</label>
                             <input value={abTopic} onChange={e => setAbTopic(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && runABHooks()}
                                 placeholder="e.g. 'Por qué el 90% pierde en forex'"
-                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/50" />
+                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20" />
                         </div>
                         <button onClick={runABHooks} disabled={abLoading || !abTopic.trim()}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white rounded-xl font-medium hover:from-fuchsia-500 hover:to-purple-500 transition-all disabled:opacity-50 shadow-lg shadow-fuchsia-500/20">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-white text-black rounded-xl font-medium hover:bg-neutral-200 transition-all disabled:opacity-50 shadow-lg shadow-white/10">
                             {abLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                             {abLoading ? "Generating 5 variations..." : "Generate A/B Hooks"}
                         </button>
@@ -289,7 +289,7 @@ export default function ToolsPage() {
                                 <span className="text-[10px] text-neutral-600">Try:</span>
                                 {["Por qué el 90% pierde en forex", "Secretos de productividad", "Cómo ganar 5K al mes online", "Errores de principiantes en cripto"].map(ex => (
                                     <button key={ex} onClick={() => setAbTopic(ex)}
-                                        className="text-[10px] bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20 px-2 py-1 rounded-lg hover:bg-fuchsia-500/20 transition-colors">
+                                        className="text-[10px] bg-white/5 text-neutral-400 border border-white/10 px-2 py-1 rounded-lg hover:bg-white/10 transition-colors">
                                         {ex}
                                     </button>
                                 ))}
@@ -300,21 +300,21 @@ export default function ToolsPage() {
                     {abHooks.length > 0 && (
                         <div className="space-y-3 animate-in fade-in duration-300">
                             {abHooks.map((hook, i) => (
-                                <div key={i} className={`bg-card border rounded-xl p-4 transition-all ${i === 0 ? "border-fuchsia-500/30 ring-1 ring-fuchsia-500/20" : "border-border"
+                                <div key={i} className={`bg-card border rounded-xl p-4 transition-all ${i === 0 ? "border-white/20 ring-1 ring-white/10" : "border-border"
                                     }`}>
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
-                                            {i === 0 && <Trophy className="w-4 h-4 text-amber-400" />}
+                                            {i === 0 && <Trophy className="w-4 h-4 text-neutral-300" />}
                                             <span className="text-xs font-bold text-neutral-500">#{hook.rank}</span>
                                             <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${hookColors[hook.hookType] || "bg-neutral-500/20 text-neutral-400"}`}>
                                                 {hook.hookType}
                                             </span>
-                                            <span className="text-xs font-bold text-amber-400">{hook.predictedScore}/100</span>
+                                            <span className="text-xs font-bold text-neutral-400">{hook.predictedScore}/100</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button onClick={() => copyToClipboard(hook.text, `hook-${i}`)}
                                                 className="text-neutral-500 hover:text-white p-1.5 rounded-lg hover:bg-neutral-800 transition-colors">
-                                                {copied === `hook-${i}` ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                                {copied === `hook-${i}` ? <Check className="w-3.5 h-3.5 text-neutral-300" /> : <Copy className="w-3.5 h-3.5" />}
                                             </button>
                                             <button onClick={() => saveScript(hook.text + "\n\n" + hook.caption, hook.hookType, hook.predictedScore)}
                                                 className="text-neutral-500 hover:text-white p-1.5 rounded-lg hover:bg-neutral-800 transition-colors">
@@ -324,10 +324,10 @@ export default function ToolsPage() {
                                     </div>
                                     <p className="text-white font-medium text-sm mb-1">&ldquo;{hook.text}&rdquo;</p>
                                     <p className="text-xs text-neutral-400 mb-2">{hook.caption}</p>
-                                    <p className="text-[11px] text-fuchsia-400">{hook.whyItWorks}</p>
+                                    <p className="text-[11px] text-neutral-400">{hook.whyItWorks}</p>
                                     <div className="mt-2 bg-neutral-900/80 border border-neutral-800 rounded-lg p-2">
                                         <p className="text-[10px] text-neutral-500">TEMPLATE</p>
-                                        <p className="text-xs text-amber-300 font-mono">{hook.template}</p>
+                                        <p className="text-xs text-neutral-400 font-mono">{hook.template}</p>
                                     </div>
                                 </div>
                             ))}
@@ -341,7 +341,7 @@ export default function ToolsPage() {
                 <div className="space-y-4">
                     {scriptsLoading ? (
                         <div className="flex items-center justify-center py-16">
-                            <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
+                            <Loader2 className="w-6 h-6 text-neutral-400 animate-spin" />
                         </div>
                     ) : scripts.length === 0 ? (
                         <div className="text-center py-16">
@@ -354,18 +354,18 @@ export default function ToolsPage() {
                             <div className="flex items-center justify-between">
                                 <p className="text-sm text-neutral-500">{scripts.length} scripts saved</p>
                                 <div className="flex gap-2 text-xs">
-                                    <span className="text-amber-400">{scripts.filter(s => s.is_favorite).length} favorites</span>
+                                    <span className="text-neutral-400">{scripts.filter(s => s.is_favorite).length} favorites</span>
                                 </div>
                             </div>
                             {/* Favorites first */}
                             {scripts.sort((a, b) => (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0)).map(script => (
-                                <div key={script.id} className={`bg-card border rounded-xl p-4 transition-all ${script.is_favorite ? "border-amber-500/30" : "border-border"
+                                <div key={script.id} className={`bg-card border rounded-xl p-4 transition-all ${script.is_favorite ? "border-white/20" : "border-border"
                                     }`}>
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                             <button onClick={() => toggleFavorite(script.id, script.is_favorite)}>
                                                 {script.is_favorite
-                                                    ? <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                                                    ? <Star className="w-4 h-4 text-neutral-300 fill-neutral-300" />
                                                     : <StarOff className="w-4 h-4 text-neutral-600" />}
                                             </button>
                                             <span className="text-sm font-medium text-white truncate max-w-[300px]">{script.title}</span>
@@ -375,13 +375,13 @@ export default function ToolsPage() {
                                                 </span>
                                             )}
                                             {script.viral_score && (
-                                                <span className="text-[10px] font-bold text-amber-400">{script.viral_score}/100</span>
+                                                <span className="text-[10px] font-bold text-neutral-400">{script.viral_score}/100</span>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button onClick={() => copyToClipboard(script.content, script.id)}
                                                 className="text-neutral-500 hover:text-white p-1.5 rounded-lg hover:bg-neutral-800 transition-colors">
-                                                {copied === script.id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                                {copied === script.id ? <Check className="w-3.5 h-3.5 text-neutral-300" /> : <Copy className="w-3.5 h-3.5" />}
                                             </button>
                                             <button onClick={() => deleteScript(script.id)}
                                                 className="text-neutral-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-neutral-800 transition-colors">
