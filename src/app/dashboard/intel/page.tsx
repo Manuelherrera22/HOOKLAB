@@ -136,13 +136,13 @@ export default function IntelligencePage() {
     };
 
     const tabs = [
-        { id: "profile", label: "Lead Profile", icon: User, color: "text-blue-400" },
-        { id: "hooks", label: "Hooks", icon: Zap, color: "text-amber-400" },
-        { id: "spy", label: "Content Spy", icon: Eye, color: "text-green-400" },
-        { id: "audience", label: "Audience", icon: Users, color: "text-purple-400" },
-        { id: "trends", label: "Trends", icon: Radar, color: "text-cyan-400" },
-        { id: "mediakit", label: "Mediakit", icon: FileText, color: "text-pink-400" },
-        { id: "battle", label: "Battle Map", icon: Swords, color: "text-orange-400" },
+        { id: "profile", label: "Lead Profile", icon: User, color: "text-neutral-300" },
+        { id: "hooks", label: "Hooks", icon: Zap, color: "text-neutral-300" },
+        { id: "spy", label: "Content Spy", icon: Eye, color: "text-neutral-300" },
+        { id: "audience", label: "Audience", icon: Users, color: "text-neutral-300" },
+        { id: "trends", label: "Trends", icon: Radar, color: "text-neutral-300" },
+        { id: "mediakit", label: "Mediakit", icon: FileText, color: "text-neutral-300" },
+        { id: "battle", label: "Battle Map", icon: Swords, color: "text-neutral-300" },
     ];
 
     const fmt = (n: number) => {
@@ -158,7 +158,7 @@ export default function IntelligencePage() {
             {/* Header */}
             <div>
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-2">
-                    <Brain className="w-7 h-7 text-fuchsia-400" />
+                    <Brain className="w-7 h-7 text-neutral-400" />
                     Intelligence Hub
                 </h1>
                 <p className="text-neutral-400 text-sm">Full commercial intelligence profile — powered by AI analysis.</p>
@@ -173,13 +173,13 @@ export default function IntelligencePage() {
                         onChange={(e) => setUsername(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                         placeholder="Enter TikTok username (e.g. kiyosaki.criollo)"
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl pl-10 pr-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/50"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl pl-10 pr-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20"
                     />
                 </div>
                 <button
                     onClick={handleSearch}
                     disabled={loading || !username.trim()}
-                    className="flex items-center gap-2 px-5 py-3 bg-fuchsia-600 text-white rounded-xl font-medium hover:bg-fuchsia-500 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-5 py-3 bg-white text-black rounded-xl font-medium hover:bg-neutral-200 transition-colors disabled:opacity-50"
                 >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                     <span>{loading ? "Loading..." : "View Data"}</span>
@@ -187,7 +187,7 @@ export default function IntelligencePage() {
                 <button
                     onClick={handleRunFullReport}
                     disabled={!username.trim() || missionStatus === "pending" || missionStatus === "running"}
-                    className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-xl font-medium hover:from-emerald-500 hover:to-cyan-500 transition-all disabled:opacity-50 shadow-lg shadow-emerald-500/20"
+                    className="flex items-center gap-2 px-5 py-3 bg-neutral-700 text-white rounded-xl font-medium hover:bg-neutral-600 transition-all disabled:opacity-50 shadow-lg shadow-black/20"
                 >
                     {missionStatus === "pending" || missionStatus === "running"
                         ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -198,21 +198,21 @@ export default function IntelligencePage() {
 
             {/* Mission Progress */}
             {(missionStatus === "pending" || missionStatus === "running") && (
-                <div className="bg-card border border-emerald-500/20 rounded-2xl p-5 animate-in fade-in duration-300">
+                <div className="bg-card border border-white/10 rounded-2xl p-5 animate-in fade-in duration-300">
                     <div className="flex items-center gap-2 mb-4">
-                        <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+                        <Loader2 className="w-5 h-5 text-neutral-400 animate-spin" />
                         <p className="text-sm font-semibold text-white">Full Report in progress for @{username}</p>
                     </div>
                     <div className="grid grid-cols-7 gap-2">
                         {PHASES.map((phase, i) => (
                             <div key={i} className="text-center">
-                                <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-bold mb-1 transition-all duration-500 ${i < missionPhase ? "bg-emerald-500 text-white" :
-                                    i === missionPhase ? "bg-emerald-500/30 text-emerald-400 ring-2 ring-emerald-500/50 animate-pulse" :
+                                <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-bold mb-1 transition-all duration-500 ${i < missionPhase ? "bg-white text-black" :
+                                    i === missionPhase ? "bg-white/20 text-neutral-300 ring-2 ring-white/30 animate-pulse" :
                                         "bg-neutral-800 text-neutral-600"
                                     }`}>
                                     {i < missionPhase ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
                                 </div>
-                                <p className={`text-[10px] ${i <= missionPhase ? "text-emerald-400" : "text-neutral-600"}`}>{phase}</p>
+                                <p className={`text-[10px] ${i <= missionPhase ? "text-neutral-300" : "text-neutral-600"}`}>{phase}</p>
                             </div>
                         ))}
                     </div>
@@ -220,16 +220,16 @@ export default function IntelligencePage() {
             )}
 
             {missionStatus === "completed" && (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-2 animate-in fade-in duration-300">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <p className="text-sm text-emerald-300">Full report completed! Data refreshed automatically.</p>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-2 animate-in fade-in duration-300">
+                    <CheckCircle2 className="w-5 h-5 text-neutral-300" />
+                    <p className="text-sm text-neutral-300">Full report completed! Data refreshed automatically.</p>
                 </div>
             )}
 
             {loading && (
                 <div className="flex items-center justify-center py-20">
                     <div className="flex flex-col items-center gap-4">
-                        <div className="w-10 h-10 rounded-full border-2 border-fuchsia-500/30 border-t-fuchsia-500 animate-spin" />
+                        <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
                         <p className="text-neutral-500 text-sm animate-pulse">Loading intelligence data...</p>
                     </div>
                 </div>
@@ -246,8 +246,8 @@ export default function IntelligencePage() {
             {!loading && !hasAnyData && !username && (
                 <div className="space-y-6 animate-in fade-in">
                     {/* Getting Started Guide */}
-                    <div className="bg-card border border-fuchsia-500/10 rounded-2xl p-6 text-center">
-                        <Brain className="w-12 h-12 text-fuchsia-400 mx-auto mb-3" />
+                    <div className="bg-card border border-white/5 rounded-2xl p-6 text-center">
+                        <Brain className="w-12 h-12 text-neutral-500 mx-auto mb-3" />
                         <h2 className="text-lg font-bold text-white mb-1">Start Your Intelligence Analysis</h2>
                         <p className="text-sm text-neutral-400 max-w-md mx-auto">
                             Enter any TikTok username above to unlock a complete commercial profile with AI-powered insights.
@@ -257,12 +257,12 @@ export default function IntelligencePage() {
                     {/* What You'll Get */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {[
-                            { icon: <User className="w-5 h-5" />, label: "Lead Profile", desc: "Full commercial breakdown", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-                            { icon: <Zap className="w-5 h-5" />, label: "Hook Analysis", desc: "Top performing hooks decoded", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
-                            { icon: <Eye className="w-5 h-5" />, label: "Content Spy", desc: "Winning content patterns", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-                            { icon: <Users className="w-5 h-5" />, label: "Audience Mirror", desc: "Demographics & psychographics", color: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
-                            { icon: <Radar className="w-5 h-5" />, label: "Trend Radar", desc: "Rising trends in niche", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
-                            { icon: <Swords className="w-5 h-5" />, label: "Battle Map", desc: "Head-to-head competitor comparison", color: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
+                            { icon: <User className="w-5 h-5" />, label: "Lead Profile", desc: "Full commercial breakdown", color: "text-neutral-400 bg-white/5 border-white/10" },
+                            { icon: <Zap className="w-5 h-5" />, label: "Hook Analysis", desc: "Top performing hooks decoded", color: "text-neutral-400 bg-white/5 border-white/10" },
+                            { icon: <Eye className="w-5 h-5" />, label: "Content Spy", desc: "Winning content patterns", color: "text-neutral-400 bg-white/5 border-white/10" },
+                            { icon: <Users className="w-5 h-5" />, label: "Audience Mirror", desc: "Demographics & psychographics", color: "text-neutral-400 bg-white/5 border-white/10" },
+                            { icon: <Radar className="w-5 h-5" />, label: "Trend Radar", desc: "Rising trends in niche", color: "text-neutral-400 bg-white/5 border-white/10" },
+                            { icon: <Swords className="w-5 h-5" />, label: "Battle Map", desc: "Head-to-head competitor comparison", color: "text-neutral-400 bg-white/5 border-white/10" },
                         ].map(f => (
                             <div key={f.label} className={`${f.color} border rounded-2xl p-4`}>
                                 <div className="mb-2">{f.icon}</div>
@@ -275,11 +275,11 @@ export default function IntelligencePage() {
                     {/* Quick Start Hint */}
                     <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl p-4 text-center">
                         <p className="text-xs text-neutral-500">
-                            💡 <span className="text-neutral-400">Try:</span> <button onClick={() => { setUsername("kiyosaki.criollo"); fetchIntel("kiyosaki.criollo"); }} className="text-fuchsia-400 hover:text-fuchsia-300 underline">kiyosaki.criollo</button>
+                            💡 <span className="text-neutral-400">Try:</span> <button onClick={() => { setUsername("kiyosaki.criollo"); fetchIntel("kiyosaki.criollo"); }} className="text-neutral-300 hover:text-white underline">kiyosaki.criollo</button>
                             {" · "}
-                            <button onClick={() => { setUsername("luiscarlossi"); fetchIntel("luiscarlossi"); }} className="text-fuchsia-400 hover:text-fuchsia-300 underline">luiscarlossi</button>
+                            <button onClick={() => { setUsername("luiscarlossi"); fetchIntel("luiscarlossi"); }} className="text-neutral-300 hover:text-white underline">luiscarlossi</button>
                             {" · "}
-                            <button onClick={() => { setUsername("garyvee"); fetchIntel("garyvee"); }} className="text-fuchsia-400 hover:text-fuchsia-300 underline">garyvee</button>
+                            <button onClick={() => { setUsername("garyvee"); fetchIntel("garyvee"); }} className="text-neutral-300 hover:text-white underline">garyvee</button>
                         </p>
                     </div>
                 </div>
@@ -310,7 +310,7 @@ export default function IntelligencePage() {
                         {/* ═══ LEAD PROFILE ═══ */}
                         {activeTab === "profile" && data?.leadProfile && (
                             <div className="space-y-4">
-                                <SectionCard title="Profile Summary" icon={<User className="w-5 h-5 text-blue-400" />}>
+                                <SectionCard title="Profile Summary" icon={<User className="w-5 h-5 text-neutral-400" />}>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {Object.entries(data.leadProfile.profile_summary || {}).map(([k, v]) => (
                                             <div key={k} className="bg-neutral-900/50 rounded-lg p-3 border border-neutral-800/50">
@@ -322,7 +322,7 @@ export default function IntelligencePage() {
                                 </SectionCard>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <SectionCard title="Buyer Persona" icon={<Target className="w-5 h-5 text-amber-400" />}>
+                                    <SectionCard title="Buyer Persona" icon={<Target className="w-5 h-5 text-neutral-400" />}>
                                         {Object.entries(data.leadProfile.buyer_persona || {}).map(([k, v]) => (
                                             <div key={k} className="mb-3">
                                                 <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">{k.replace(/_/g, " ")}</p>
@@ -331,10 +331,10 @@ export default function IntelligencePage() {
                                         ))}
                                     </SectionCard>
 
-                                    <SectionCard title="Sales Approach" icon={<ShoppingBag className="w-5 h-5 text-green-400" />}>
+                                    <SectionCard title="Sales Approach" icon={<ShoppingBag className="w-5 h-5 text-neutral-400" />}>
                                         {data.leadProfile.sales_approach?.recommended_pitch && (
-                                            <div className="bg-gradient-to-r from-fuchsia-500/10 to-purple-500/10 border border-fuchsia-500/20 rounded-lg p-3 mb-3">
-                                                <p className="text-xs text-fuchsia-400 font-semibold mb-1">RECOMMENDED PITCH</p>
+                                            <div className="bg-white/5 border border-white/10 rounded-lg p-3 mb-3">
+                                                <p className="text-xs text-neutral-300 font-semibold mb-1">RECOMMENDED PITCH</p>
                                                 <p className="text-sm text-white italic">&ldquo;{data.leadProfile.sales_approach.recommended_pitch}&rdquo;</p>
                                             </div>
                                         )}
@@ -343,7 +343,7 @@ export default function IntelligencePage() {
                                                 <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Products They Need</p>
                                                 <div className="flex flex-wrap gap-1">
                                                     {data.leadProfile.sales_approach.products_they_need.map((p: string, i: number) => (
-                                                        <span key={i} className="bg-green-500/10 text-green-400 border border-green-500/20 text-xs px-2 py-1 rounded-lg">{p}</span>
+                                                        <span key={i} className="bg-white/5 text-neutral-300 border border-white/10 text-xs px-2 py-1 rounded-lg">{p}</span>
                                                     ))}
                                                 </div>
                                             </div>
@@ -359,7 +359,7 @@ export default function IntelligencePage() {
                                     </SectionCard>
                                 </div>
 
-                                <SectionCard title="Content Patterns" icon={<TrendingUp className="w-5 h-5 text-cyan-400" />}>
+                                <SectionCard title="Content Patterns" icon={<TrendingUp className="w-5 h-5 text-neutral-400" />}>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         {Object.entries(data.leadProfile.content_patterns || {}).map(([k, v]) => (
                                             <div key={k} className="bg-neutral-900/50 rounded-lg p-3 border border-neutral-800/50">
@@ -376,13 +376,13 @@ export default function IntelligencePage() {
                         {activeTab === "hooks" && data?.hooks?.length > 0 && (
                             <div className="space-y-3">
                                 {data.hooks.map((hook, i) => (
-                                    <div key={i} className="bg-card border border-border rounded-xl p-4 hover:border-amber-500/30 transition-colors">
+                                    <div key={i} className="bg-card border border-border rounded-xl p-4 hover:border-white/20 transition-colors">
                                         <div className="flex items-start justify-between mb-2">
                                             <div className="flex items-center gap-2">
-                                                <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${hook.hook_type === "shock" ? "bg-red-500/20 text-red-400" :
-                                                    hook.hook_type === "question" ? "bg-blue-500/20 text-blue-400" :
-                                                        hook.hook_type === "challenge" ? "bg-amber-500/20 text-amber-400" :
-                                                            hook.hook_type === "controversy" ? "bg-purple-500/20 text-purple-400" :
+                                                <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${hook.hook_type === "shock" ? "bg-white/10 text-neutral-300" :
+                                                    hook.hook_type === "question" ? "bg-white/10 text-neutral-300" :
+                                                        hook.hook_type === "challenge" ? "bg-white/10 text-neutral-300" :
+                                                            hook.hook_type === "controversy" ? "bg-white/10 text-neutral-300" :
                                                                 "bg-neutral-500/20 text-neutral-400"
                                                     }`}>
                                                     {hook.hook_type}
@@ -398,12 +398,12 @@ export default function IntelligencePage() {
                                         </div>
                                         <p className="text-white font-medium text-sm mb-2">&ldquo;{hook.hook_text}&rdquo;</p>
                                         {hook.structure?.emotional_trigger && (
-                                            <p className="text-xs text-fuchsia-400 mb-2">Trigger: {hook.structure.emotional_trigger}</p>
+                                            <p className="text-xs text-neutral-400 mb-2">Trigger: {hook.structure.emotional_trigger}</p>
                                         )}
                                         <p className="text-xs text-neutral-400 mb-2">{hook.why_it_worked}</p>
                                         <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-2.5">
                                             <p className="text-xs text-neutral-500 mb-1">TEMPLATE</p>
-                                            <p className="text-xs text-amber-300 font-mono">{hook.adaptable_template}</p>
+                                            <p className="text-xs text-neutral-400 font-mono">{hook.adaptable_template}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -412,20 +412,20 @@ export default function IntelligencePage() {
 
                         {/* ═══ CONTENT SPY ═══ */}
                         {activeTab === "spy" && data?.contentSpy && (
-                            <SectionCard title="Content Spy Report" icon={<Eye className="w-5 h-5 text-green-400" />}>
+                            <SectionCard title="Content Spy Report" icon={<Eye className="w-5 h-5 text-neutral-400" />}>
                                 {(() => {
                                     const spy = data.contentSpy.profile_summary?.spy_report || {};
                                     const meta = data.contentSpy.content_patterns || {};
                                     return (
                                         <div className="space-y-4">
                                             <div className="grid grid-cols-3 gap-3">
-                                                <StatCard label="New Videos" value={meta.new_videos_count ?? 0} color="text-green-400" />
-                                                <StatCard label="Tracked" value={meta.total_tracked ?? 0} color="text-blue-400" />
-                                                <StatCard label="Trend" value={spy.engagement_trend ?? "N/A"} color="text-amber-400" />
+                                                <StatCard label="New Videos" value={meta.new_videos_count ?? 0} color="text-neutral-300" />
+                                                <StatCard label="Tracked" value={meta.total_tracked ?? 0} color="text-neutral-300" />
+                                                <StatCard label="Trend" value={spy.engagement_trend ?? "N/A"} color="text-neutral-300" />
                                             </div>
                                             {meta.strategic_summary && (
-                                                <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-3">
-                                                    <p className="text-xs text-green-400 font-semibold mb-1">STRATEGIC SUMMARY</p>
+                                                <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                                    <p className="text-xs text-neutral-300 font-semibold mb-1">STRATEGIC SUMMARY</p>
                                                     <p className="text-sm text-neutral-300">{meta.strategic_summary}</p>
                                                 </div>
                                             )}
@@ -434,7 +434,7 @@ export default function IntelligencePage() {
                                                     <p className="text-xs text-neutral-500 uppercase tracking-wider mb-2">Recommendations</p>
                                                     {spy.recommendations.map((r: string, i: number) => (
                                                         <div key={i} className="flex items-start gap-2 mb-2">
-                                                            <ArrowUpRight className="w-3.5 h-3.5 text-green-400 mt-0.5 shrink-0" />
+                                                            <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400 mt-0.5 shrink-0" />
                                                             <p className="text-sm text-neutral-300">{r}</p>
                                                         </div>
                                                     ))}
@@ -450,9 +450,9 @@ export default function IntelligencePage() {
                         {activeTab === "audience" && data?.audienceMirror && (
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <span className={`text-sm font-bold px-3 py-1 rounded-lg ${data.audienceMirror.sentiment === "positive" ? "bg-green-500/20 text-green-400" :
-                                        data.audienceMirror.sentiment === "mixed" ? "bg-amber-500/20 text-amber-400" :
-                                            data.audienceMirror.sentiment === "negative" ? "bg-red-500/20 text-red-400" :
+                                    <span className={`text-sm font-bold px-3 py-1 rounded-lg ${data.audienceMirror.sentiment === "positive" ? "bg-white/10 text-neutral-300" :
+                                        data.audienceMirror.sentiment === "mixed" ? "bg-white/10 text-neutral-400" :
+                                            data.audienceMirror.sentiment === "negative" ? "bg-white/10 text-neutral-400" :
                                                 "bg-neutral-500/20 text-neutral-400"
                                         }`}>
                                         Sentiment: {data.audienceMirror.sentiment}
@@ -460,39 +460,39 @@ export default function IntelligencePage() {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <SectionCard title="Top Questions" icon={<HelpCircle className="w-5 h-5 text-blue-400" />}>
+                                    <SectionCard title="Top Questions" icon={<HelpCircle className="w-5 h-5 text-neutral-400" />}>
                                         {(data.audienceMirror.top_questions || []).map((q: string, i: number) => (
                                             <p key={i} className="text-sm text-neutral-300 mb-2 flex items-start gap-2">
-                                                <span className="text-blue-400 shrink-0">?</span> {q}
+                                                <span className="text-neutral-400 shrink-0">?</span> {q}
                                             </p>
                                         ))}
                                     </SectionCard>
 
-                                    <SectionCard title="Objections" icon={<AlertTriangle className="w-5 h-5 text-red-400" />}>
+                                    <SectionCard title="Objections" icon={<AlertTriangle className="w-5 h-5 text-neutral-400" />}>
                                         {(data.audienceMirror.objections || []).map((o: string, i: number) => (
                                             <p key={i} className="text-sm text-neutral-300 mb-2 flex items-start gap-2">
-                                                <ShieldAlert className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" /> {o}
+                                                <ShieldAlert className="w-3.5 h-3.5 text-neutral-400 mt-0.5 shrink-0" /> {o}
                                             </p>
                                         ))}
                                     </SectionCard>
 
-                                    <SectionCard title="Products Requested" icon={<ShoppingBag className="w-5 h-5 text-green-400" />}>
+                                    <SectionCard title="Products Requested" icon={<ShoppingBag className="w-5 h-5 text-neutral-400" />}>
                                         {(data.audienceMirror.product_requests || []).map((p: string, i: number) => (
                                             <p key={i} className="text-sm text-neutral-300 mb-2 flex items-start gap-2">
-                                                <ShoppingBag className="w-3.5 h-3.5 text-green-400 mt-0.5 shrink-0" /> {p}
+                                                <ShoppingBag className="w-3.5 h-3.5 text-neutral-400 mt-0.5 shrink-0" /> {p}
                                             </p>
                                         ))}
                                     </SectionCard>
                                 </div>
 
                                 {data.audienceMirror.audience_segments?.length > 0 && (
-                                    <SectionCard title="Audience Segments" icon={<Users className="w-5 h-5 text-purple-400" />}>
+                                    <SectionCard title="Audience Segments" icon={<Users className="w-5 h-5 text-neutral-400" />}>
                                         <div className="space-y-2">
                                             {data.audienceMirror.audience_segments.map((seg: any, i: number) => (
                                                 <div key={i} className="flex items-center gap-3">
                                                     <div className="w-full bg-neutral-800 rounded-full h-6 relative overflow-hidden">
                                                         <div
-                                                            className={`h-full rounded-full flex items-center px-3 ${i === 0 ? "bg-purple-500/30" : i === 1 ? "bg-blue-500/30" : "bg-red-500/30"
+                                                            className={`h-full rounded-full flex items-center px-3 ${i === 0 ? "bg-white/15" : i === 1 ? "bg-white/10" : "bg-white/5"
                                                                 }`}
                                                             style={{ width: `${seg.percentage}%` }}
                                                         >
@@ -513,30 +513,30 @@ export default function IntelligencePage() {
                         {activeTab === "trends" && data?.trendRadar && (
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <SectionCard title="Rising Topics" icon={<TrendingUp className="w-5 h-5 text-green-400" />}>
+                                    <SectionCard title="Rising Topics" icon={<TrendingUp className="w-5 h-5 text-neutral-400" />}>
                                         {(data.trendRadar.rising_topics || []).map((t: string, i: number) => (
-                                            <p key={i} className="text-sm text-green-300 mb-2 flex items-start gap-2">
+                                            <p key={i} className="text-sm text-neutral-300 mb-2 flex items-start gap-2">
                                                 <TrendingUp className="w-3.5 h-3.5 mt-0.5 shrink-0" /> {t}
                                             </p>
                                         ))}
                                     </SectionCard>
 
-                                    <SectionCard title="Dying Topics" icon={<TrendingDown className="w-5 h-5 text-red-400" />}>
+                                    <SectionCard title="Dying Topics" icon={<TrendingDown className="w-5 h-5 text-neutral-400" />}>
                                         {(data.trendRadar.dying_topics || []).map((t: string, i: number) => (
-                                            <p key={i} className="text-sm text-red-300 mb-2 flex items-start gap-2">
+                                            <p key={i} className="text-sm text-neutral-400 mb-2 flex items-start gap-2">
                                                 <TrendingDown className="w-3.5 h-3.5 mt-0.5 shrink-0" /> {t}
                                             </p>
                                         ))}
                                     </SectionCard>
                                 </div>
 
-                                <SectionCard title="Trending Hashtags" icon={<Hash className="w-5 h-5 text-cyan-400" />}>
+                                <SectionCard title="Trending Hashtags" icon={<Hash className="w-5 h-5 text-neutral-400" />}>
                                     <div className="flex flex-wrap gap-2">
                                         {(data.trendRadar.trending_hashtags || []).map((h: any, i: number) => (
                                             <span
                                                 key={i}
-                                                className={`text-xs px-3 py-1.5 rounded-lg border font-medium ${h.growth === "rising" ? "bg-green-500/10 text-green-400 border-green-500/20" :
-                                                    h.growth === "declining" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                                                className={`text-xs px-3 py-1.5 rounded-lg border font-medium ${h.growth === "rising" ? "bg-white/10 text-neutral-300 border-white/15" :
+                                                    h.growth === "declining" ? "bg-white/5 text-neutral-500 border-white/10" :
                                                         "bg-neutral-500/10 text-neutral-400 border-neutral-500/20"
                                                     }`}
                                             >
@@ -547,23 +547,23 @@ export default function IntelligencePage() {
                                 </SectionCard>
 
                                 {data.trendRadar.prediction && (
-                                    <SectionCard title="Predictions" icon={<Sparkles className="w-5 h-5 text-amber-400" />}>
+                                    <SectionCard title="Predictions" icon={<Sparkles className="w-5 h-5 text-neutral-400" />}>
                                         <div className="space-y-3">
                                             {data.trendRadar.prediction.next_week && (
-                                                <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
-                                                    <p className="text-xs text-amber-400 font-semibold mb-1">NEXT WEEK</p>
+                                                <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                                    <p className="text-xs text-neutral-300 font-semibold mb-1">NEXT WEEK</p>
                                                     <p className="text-sm text-neutral-300">{data.trendRadar.prediction.next_week}</p>
                                                 </div>
                                             )}
                                             {data.trendRadar.prediction.next_month && (
-                                                <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3">
-                                                    <p className="text-xs text-cyan-400 font-semibold mb-1">NEXT MONTH</p>
+                                                <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                                    <p className="text-xs text-neutral-300 font-semibold mb-1">NEXT MONTH</p>
                                                     <p className="text-sm text-neutral-300">{data.trendRadar.prediction.next_month}</p>
                                                 </div>
                                             )}
                                             {data.trendRadar.prediction.avoid && (
-                                                <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
-                                                    <p className="text-xs text-red-400 font-semibold mb-1">AVOID</p>
+                                                <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                                    <p className="text-xs text-neutral-400 font-semibold mb-1">AVOID</p>
                                                     <p className="text-sm text-neutral-300">{data.trendRadar.prediction.avoid}</p>
                                                 </div>
                                             )}
@@ -575,24 +575,24 @@ export default function IntelligencePage() {
 
                         {/* ═══ MEDIAKIT ═══ */}
                         {activeTab === "mediakit" && data?.mediakit && (
-                            <SectionCard title="Mediakit — Verified Stats" icon={<FileText className="w-5 h-5 text-pink-400" />}>
+                            <SectionCard title="Mediakit — Verified Stats" icon={<FileText className="w-5 h-5 text-neutral-400" />}>
                                 {(() => {
                                     const mk = data.mediakit.profile_summary || {};
                                     return (
                                         <div className="space-y-4">
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                <StatCard label="Total Views" value={fmt(mk.total_views || 0)} color="text-blue-400" icon={<Eye className="w-4 h-4" />} />
-                                                <StatCard label="Total Likes" value={fmt(mk.total_likes || 0)} color="text-red-400" icon={<Heart className="w-4 h-4" />} />
-                                                <StatCard label="Comments" value={fmt(mk.total_comments || 0)} color="text-amber-400" icon={<MessageCircle className="w-4 h-4" />} />
-                                                <StatCard label="Engagement" value={`${mk.engagement_rate || 0}%`} color="text-green-400" icon={<TrendingUp className="w-4 h-4" />} />
+                                                <StatCard label="Total Views" value={fmt(mk.total_views || 0)} color="text-neutral-300" icon={<Eye className="w-4 h-4" />} />
+                                                <StatCard label="Total Likes" value={fmt(mk.total_likes || 0)} color="text-neutral-300" icon={<Heart className="w-4 h-4" />} />
+                                                <StatCard label="Comments" value={fmt(mk.total_comments || 0)} color="text-neutral-300" icon={<MessageCircle className="w-4 h-4" />} />
+                                                <StatCard label="Engagement" value={`${mk.engagement_rate || 0}%`} color="text-neutral-300" icon={<TrendingUp className="w-4 h-4" />} />
                                             </div>
                                             <div className="grid grid-cols-2 gap-3">
-                                                <StatCard label="Avg Views/Video" value={fmt(mk.avg_views || 0)} color="text-cyan-400" />
-                                                <StatCard label="Videos" value={data.mediakit.video_count || 0} color="text-purple-400" />
+                                                <StatCard label="Avg Views/Video" value={fmt(mk.avg_views || 0)} color="text-neutral-300" />
+                                                <StatCard label="Videos" value={data.mediakit.video_count || 0} color="text-neutral-300" />
                                             </div>
                                             {mk.pdf_path && (
-                                                <div className="bg-pink-500/5 border border-pink-500/20 rounded-lg p-3">
-                                                    <p className="text-xs text-pink-400 font-semibold mb-1">PDF MEDIAKIT</p>
+                                                <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                                    <p className="text-xs text-neutral-300 font-semibold mb-1">PDF MEDIAKIT</p>
                                                     <p className="text-sm text-neutral-300 truncate">{mk.pdf_path}</p>
                                                 </div>
                                             )}
@@ -604,7 +604,7 @@ export default function IntelligencePage() {
                         {/* ═══ BATTLE MAP ═══ */}
                         {activeTab === "battle" && (
                             <div className="space-y-4">
-                                <SectionCard title="Competitor Battle Map" icon={<Swords className="w-5 h-5 text-orange-400" />}>
+                                <SectionCard title="Competitor Battle Map" icon={<Swords className="w-5 h-5 text-neutral-400" />}>
                                     <p className="text-xs text-neutral-500 mb-3">Add up to 3 competitor usernames to compare against @{username}</p>
                                     <div className="space-y-2 mb-3">
                                         {battleCompetitors.map((c, i) => (
@@ -617,7 +617,7 @@ export default function IntelligencePage() {
                                                         setBattleCompetitors(updated);
                                                     }}
                                                     placeholder={`Competitor ${i + 1} username`}
-                                                    className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+                                                    className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20"
                                                 />
                                                 {battleCompetitors.length > 1 && (
                                                     <button onClick={() => setBattleCompetitors(prev => prev.filter((_, j) => j !== i))} className="text-neutral-500 hover:text-red-400">
@@ -636,7 +636,7 @@ export default function IntelligencePage() {
                                         <button
                                             onClick={runBattleMap}
                                             disabled={battleLoading || !battleCompetitors.some(c => c.trim())}
-                                            className="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg text-sm font-medium hover:from-orange-500 hover:to-red-500 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-2 px-4 py-1.5 bg-white text-black rounded-lg text-sm font-medium hover:bg-neutral-200 transition-all disabled:opacity-50"
                                         >
                                             {battleLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Swords className="w-3.5 h-3.5" />}
                                             {battleLoading ? "Analyzing..." : "Compare"}
@@ -647,7 +647,7 @@ export default function IntelligencePage() {
                                 {battleLoading && (
                                     <div className="flex items-center justify-center py-10">
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full border-2 border-orange-500/30 border-t-orange-500 animate-spin" />
+                                            <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
                                             <p className="text-neutral-500 text-sm animate-pulse">AI is comparing accounts...</p>
                                         </div>
                                     </div>
@@ -658,17 +658,17 @@ export default function IntelligencePage() {
                                         {/* Side-by-side stats */}
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                             {battleData.accounts.map((acc: any) => (
-                                                <div key={acc.username} className={`bg-card border rounded-xl p-4 ${battleData.analysis?.winner === acc.username ? "border-orange-500/40 ring-1 ring-orange-500/20" : "border-border"
+                                                <div key={acc.username} className={`bg-card border rounded-xl p-4 ${battleData.analysis?.winner === acc.username ? "border-white/20 ring-1 ring-white/10" : "border-border"
                                                     }`}>
                                                     <p className="text-sm font-bold text-white mb-2 truncate">@{acc.username}</p>
                                                     {battleData.analysis?.winner === acc.username && (
-                                                        <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-bold">WINNER</span>
+                                                        <span className="text-[10px] bg-white/10 text-neutral-200 px-2 py-0.5 rounded-full font-bold">WINNER</span>
                                                     )}
                                                     <div className="mt-2 space-y-1.5">
                                                         <p className="text-xs text-neutral-400">Videos: <span className="text-white font-medium">{acc.videoCount}</span></p>
                                                         <p className="text-xs text-neutral-400">Views: <span className="text-white font-medium">{acc.totalViews?.toLocaleString()}</span></p>
                                                         <p className="text-xs text-neutral-400">Avg: <span className="text-white font-medium">{acc.avgViews?.toLocaleString()}</span></p>
-                                                        <p className="text-xs text-neutral-400">Engagement: <span className="text-emerald-400 font-medium">{acc.engagementRate}%</span></p>
+                                                        <p className="text-xs text-neutral-400">Engagement: <span className="text-neutral-200 font-medium">{acc.engagementRate}%</span></p>
                                                     </div>
                                                 </div>
                                             ))}
@@ -676,12 +676,12 @@ export default function IntelligencePage() {
 
                                         {/* GPT Insights */}
                                         {battleData.analysis?.insights && (
-                                            <SectionCard title="AI Competitive Analysis" icon={<Brain className="w-5 h-5 text-orange-400" />}>
+                                            <SectionCard title="AI Competitive Analysis" icon={<Brain className="w-5 h-5 text-neutral-400" />}>
                                                 <div className="space-y-3">
                                                     {battleData.analysis.insights.map((ins: any, i: number) => (
                                                         <div key={i} className="bg-neutral-900/50 border border-neutral-800/50 rounded-lg p-3">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-xs font-bold text-orange-400 uppercase">{ins.category}</span>
+                                                                <span className="text-xs font-bold text-neutral-300 uppercase">{ins.category}</span>
                                                                 <span className="text-xs text-neutral-500">Leader: @{ins.leader}</span>
                                                             </div>
                                                             <p className="text-sm text-neutral-300">{ins.analysis}</p>
@@ -692,10 +692,10 @@ export default function IntelligencePage() {
                                         )}
 
                                         {battleData.analysis?.opportunities && (
-                                            <SectionCard title="Opportunities" icon={<Sparkles className="w-5 h-5 text-amber-400" />}>
+                                            <SectionCard title="Opportunities" icon={<Sparkles className="w-5 h-5 text-neutral-400" />}>
                                                 {battleData.analysis.opportunities.map((o: string, i: number) => (
                                                     <div key={i} className="flex items-start gap-2 mb-2">
-                                                        <ArrowUpRight className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+                                                        <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400 mt-0.5 shrink-0" />
                                                         <p className="text-sm text-neutral-300">{o}</p>
                                                     </div>
                                                 ))}
@@ -703,8 +703,8 @@ export default function IntelligencePage() {
                                         )}
 
                                         {battleData.analysis?.recommendation && (
-                                            <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-4">
-                                                <p className="text-xs text-orange-400 font-semibold mb-1">STRATEGIC RECOMMENDATION</p>
+                                            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                                                <p className="text-xs text-neutral-300 font-semibold mb-1">STRATEGIC RECOMMENDATION</p>
                                                 <p className="text-sm text-neutral-200">{battleData.analysis.recommendation}</p>
                                             </div>
                                         )}
