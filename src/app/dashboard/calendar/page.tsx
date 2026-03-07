@@ -7,7 +7,7 @@ import {
     Calendar as CalendarIcon, Clock, Send, Plus, Trash2,
     Instagram, Youtube, Check, Loader2, Link2,
     ExternalLink, Settings, Zap, ChevronLeft, ChevronRight,
-    Video, Image as ImageIcon, FileText, AlertCircle, Globe
+    Video, Image as ImageIcon, FileText, AlertCircle, Globe, Sparkles
 } from "lucide-react";
 
 interface ScheduledPost {
@@ -53,6 +53,7 @@ export default function CalendarPage() {
     const [newVideoUrl, setNewVideoUrl] = useState("");
     const [publishing, setPublishing] = useState(false);
     const [publishResult, setPublishResult] = useState("");
+    const [generatingCopy, setGeneratingCopy] = useState(false);
 
     // Settings
     const [showSettings, setShowSettings] = useState(false);
@@ -383,10 +384,43 @@ export default function CalendarPage() {
                             placeholder="#hashtag1 #hashtag2 #hashtag3"
                             className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20" />
 
-                        {/* Video URL */}
-                        <input value={newVideoUrl} onChange={e => setNewVideoUrl(e.target.value)}
-                            placeholder="Video URL (optional — paste from Video Studio)"
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20" />
+                        {/* Media URL + AI Copy Generator */}
+                        <div>
+                            <label className="text-[10px] text-neutral-500 uppercase mb-1 block">Media URL (Google Drive, Dropbox, direct link)</label>
+                            <input value={newVideoUrl} onChange={e => setNewVideoUrl(e.target.value)}
+                                placeholder="https://drive.google.com/file/d/... o cualquier URL de media"
+                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20" />
+                            {newVideoUrl.trim() && (
+                                <button onClick={async () => {
+                                    setGeneratingCopy(true);
+                                    try {
+                                        const res = await fetch('/api/generate-copy', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                driveUrl: newVideoUrl,
+                                                platform: newPlatforms[0] || 'instagram',
+                                                language: 'Spanish',
+                                            }),
+                                        });
+                                        const data = await res.json();
+                                        if (data.caption) {
+                                            setNewCaption(data.caption);
+                                        } else {
+                                            setPublishResult('❌ No se pudo generar el copy');
+                                        }
+                                    } catch (e: any) {
+                                        setPublishResult(`❌ ${e.message}`);
+                                    } finally {
+                                        setGeneratingCopy(false);
+                                    }
+                                }} disabled={generatingCopy}
+                                    className="mt-2 flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-600/20 to-fuchsia-600/20 text-purple-300 rounded-lg text-xs font-medium hover:from-purple-600/30 hover:to-fuchsia-600/30 border border-purple-500/20 transition-all disabled:opacity-50 w-full justify-center">
+                                    {generatingCopy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                    {generatingCopy ? 'Generando copy con AI...' : `✨ Generar Copy para ${newPlatforms[0] || 'Instagram'}`}
+                                </button>
+                            )}
+                        </div>
 
                         {/* Date/Time */}
                         <div className="grid grid-cols-2 gap-3">

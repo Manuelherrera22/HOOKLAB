@@ -359,13 +359,16 @@ export default function ChatPage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Framework</span>
-                        <div className="flex items-center space-x-2 px-3 py-1.5 bg-neutral-800 rounded-lg border border-neutral-700">
-                            <Settings className="w-4 h-4 text-neutral-400" />
-                            <span className="text-sm font-medium text-white">Robar Como Un Artista</span>
+                    {/* Framework — hidden from UI, active in system prompt */}
+                    {false && (
+                        <div className="flex items-center space-x-2">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Framework</span>
+                            <div className="flex items-center space-x-2 px-3 py-1.5 bg-neutral-800 rounded-lg border border-neutral-700">
+                                <Settings className="w-4 h-4 text-neutral-400" />
+                                <span className="text-sm font-medium text-white">Robar Como Un Artista</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {knowledge.length > 0 && (
                         <div className="flex items-center space-x-2">
