@@ -47,7 +47,20 @@ export default function DashboardOverview() {
         }
     }, [user?.id]);
 
-    const connectedAccounts = [user?.ownTiktok, user?.ownInstagram].filter(Boolean).length;
+    // ─ Social accounts from workspace_social_accounts table ─
+    const [socialAccounts, setSocialAccounts] = useState<{ id: string; platform: string; username: string; is_primary: boolean; profile_data: any }[]>([]);
+
+    useEffect(() => {
+        const ws = useStore.getState().activeWorkspace;
+        if (ws?.id) {
+            fetch(`/api/workspace/social-accounts?workspaceId=${ws.id}`)
+                .then(r => r.json())
+                .then(j => setSocialAccounts(j.accounts || []))
+                .catch(() => { });
+        }
+    }, []);
+
+    const connectedAccounts = socialAccounts.length;
 
     const handleSaveSocials = async () => {
         setSavingSocials(true); setSaveSuccess(false);
@@ -148,79 +161,42 @@ export default function DashboardOverview() {
                 </div>
             )}
 
-            {/* ===== SECTION 1: MIS REDES SOCIALES ===== */}
+            {/* ===== SECTION 1: CONNECTED SOCIAL ACCOUNTS ===== */}
             <section className="bg-card border border-border rounded-2xl p-5 md:p-6">
-                <h2 className="text-lg font-semibold text-white mb-1 flex items-center space-x-2">
-                    <Instagram className="w-5 h-5 text-neutral-400" />
-                    <span>My Social Networks</span>
-                </h2>
-                <p className="text-sm text-neutral-500 mb-5">Your own Instagram and TikTok accounts for content analysis.</p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1.5 block">TikTok</label>
-                        <input
-                            value={ownTiktok}
-                            onChange={(e) => setOwnTiktok(e.target.value)}
-                            placeholder="@your_tiktok_username"
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1.5 block">Instagram</label>
-                        <input
-                            value={ownInstagram}
-                            onChange={(e) => setOwnInstagram(e.target.value)}
-                            placeholder="@your_instagram_username"
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-white/20"
-                        />
-                    </div>
+                <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-lg font-semibold text-white flex items-center space-x-2">
+                        <Globe className="w-5 h-5 text-neutral-400" />
+                        <span>Connected Accounts</span>
+                    </h2>
+                    <a href="/dashboard/settings" className="text-xs text-neutral-500 hover:text-white transition-colors">
+                        Manage →
+                    </a>
                 </div>
-                <button
-                    onClick={handleSaveSocials}
-                    disabled={savingSocials}
-                    className="mt-4 flex items-center space-x-2 px-4 py-2.5 bg-white text-black rounded-xl font-medium hover:bg-neutral-200 transition-colors disabled:opacity-50"
-                >
-                    {savingSocials ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    <span>{savingSocials ? 'Connecting accounts...' : 'Save & Connect'}</span>
-                </button>
+                <p className="text-sm text-neutral-500 mb-4">{connectedAccounts} social account{connectedAccounts !== 1 ? 's' : ''} linked to this workspace.</p>
 
-                {/* Show fetched profile stats */}
-                {ownData && (ownData.tiktokFollowers || ownData.tiktokNickname || ownData.instagramFollowers || ownData.instagramPostsList?.length || ownData.instagramPosts) && (
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {(ownData.tiktokFollowers !== undefined && ownData.tiktokFollowers > 0 || ownData.tiktokNickname) && (
-                            <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-                                <p className="text-xs text-neutral-300 font-semibold mb-1">♪ TikTok — {ownData.tiktokNickname || user?.ownTiktok}</p>
-                                <div className="flex items-center space-x-3 text-xs text-neutral-400">
-                                    <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-neutral-500" /><span>{formatNumber(ownData.tiktokFollowers || 0)} followers</span></span>
-                                    {ownData.tiktokLikes !== undefined && <span className="flex items-center space-x-1"><Heart className="w-3 h-3 text-neutral-500" /><span>{formatNumber(ownData.tiktokLikes)}</span></span>}
-                                    {ownData.tiktokVideos !== undefined && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-neutral-500" /><span>{ownData.tiktokVideos} videos</span></span>}
+                {socialAccounts.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {socialAccounts.map(acc => (
+                            <div key={acc.id} className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-sm shrink-0">
+                                    {acc.platform === 'tiktok' ? '♪' : acc.platform === 'instagram' ? '◎' : '▶'}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium text-white truncate">
+                                        @{acc.username}
+                                        {acc.is_primary && (
+                                            <span className="ml-1.5 text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1 py-0.5 rounded uppercase">primary</span>
+                                        )}
+                                    </p>
+                                    <p className="text-xs text-neutral-500 capitalize">{acc.platform}</p>
                                 </div>
                             </div>
-                        )}
-                        {(user?.ownInstagram) && (
-                            <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-                                <p className="text-xs text-neutral-300 font-semibold mb-1">◎ Instagram — @{user?.ownInstagram?.replace('@', '')}</p>
-                                <div className="flex items-center space-x-3 text-xs text-neutral-400">
-                                    {ownData.instagramFollowers !== undefined && ownData.instagramFollowers > 0 && (
-                                        <span className="flex items-center space-x-1"><Users className="w-3 h-3 text-neutral-500" /><span>{formatNumber(ownData.instagramFollowers)} followers</span></span>
-                                    )}
-                                    {(() => {
-                                        const posts = ownData.instagramPostsList || [];
-                                        const totalLikes = posts.reduce((sum: number, p: any) => sum + (p.likes || 0), 0);
-                                        const totalComments = posts.reduce((sum: number, p: any) => sum + (p.comments || 0), 0);
-                                        return (
-                                            <>
-                                                {posts.length > 0 && <span className="flex items-center space-x-1"><Film className="w-3 h-3 text-neutral-500" /><span>{posts.length} posts</span></span>}
-                                                {totalLikes > 0 && <span className="flex items-center space-x-1"><Heart className="w-3 h-3 text-neutral-500" /><span>{formatNumber(totalLikes)} likes</span></span>}
-                                                {totalComments > 0 && <span className="text-neutral-400">💬 {formatNumber(totalComments)}</span>}
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
-                        )}
+                        ))}
                     </div>
+                ) : (
+                    <p className="text-neutral-500 text-sm text-center py-4">
+                        No accounts connected yet. <a href="/dashboard/settings" className="text-white hover:underline">Connect one →</a>
+                    </p>
                 )}
             </section>
 

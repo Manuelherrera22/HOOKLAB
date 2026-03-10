@@ -21,7 +21,6 @@ export interface OwnSocialData {
     tiktokNickname?: string;
     instagramFollowers?: number;
     instagramPosts?: number;
-    // Individual post data
     tiktokPostsList?: PostData[];
     instagramPostsList?: PostData[];
 }
@@ -34,6 +33,20 @@ export interface User {
     ownTiktok?: string;
     ownInstagram?: string;
     ownSocialData?: OwnSocialData;
+}
+
+// ─── NEW: Workspace ───
+export interface Workspace {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl?: string;
+    plan: 'free' | 'pro' | 'agency';
+    ownTiktok: string;
+    ownInstagram: string;
+    ownSocialData: OwnSocialData;
+    niche: string;
+    role: 'owner' | 'admin' | 'editor' | 'viewer';
 }
 
 export interface Reference {
@@ -66,6 +79,9 @@ export interface ChatMessage {
 
 interface StoreState {
     user: User | null;
+    // ─── NEW: Workspace state ───
+    workspaces: Workspace[];
+    activeWorkspace: Workspace | null;
     references: Reference[];
     knowledge: KnowledgeEntry[];
     chatMessages: ChatMessage[];
@@ -73,6 +89,9 @@ interface StoreState {
     clearChatMessages: () => void;
     login: (email: string) => Promise<void>;
     logout: () => void;
+    // ─── NEW: Workspace actions ───
+    switchWorkspace: (workspaceId: string) => Promise<void>;
+    createWorkspace: (name: string, niche?: string) => Promise<Workspace | null>;
     updateOwnSocials: (tiktok: string, instagram: string) => Promise<void>;
     addReference: (ref: Omit<Reference, 'id'>) => Promise<void>;
     addReferenceFromUrl: (url: string, refName: string) => Promise<void>;
@@ -82,10 +101,37 @@ interface StoreState {
     removeKnowledge: (id: string) => Promise<void>;
 }
 
+// ─── Helper: load workspace data ───
+async function loadWorkspaceData(workspaceId: string) {
+    const [refsRes, knowledgeRes, videosRes] = await Promise.all([
+        supabase.from('market_references').select('*').eq('workspace_id', workspaceId),
+        supabase.from('knowledge_entries').select('*').eq('workspace_id', workspaceId).order('created_at', { ascending: false }),
+        supabase.from('scraped_videos').select('*').eq('workspace_id', workspaceId).eq('platform', 'tiktok').order('views', { ascending: false }),
+    ]);
+
+    const references = refsRes.data?.map(r => ({
+        id: r.id, refName: r.ref_name || '', name: r.name, url: r.url,
+        platform: r.platform, views: r.views,
+        thumbnail: r.thumbnail, author: r.author,
+        followers: r.followers, likes: r.likes,
+        videoCount: r.video_count, isProfile: r.is_profile
+    })) || [];
+
+    const knowledge = knowledgeRes.data?.map(k => ({
+        id: k.id, title: k.title, content: k.content, createdAt: k.created_at
+    })) || [];
+
+    const scrapedVideos = videosRes.data || [];
+
+    return { references, knowledge, scrapedVideos };
+}
+
 export const useStore = create<StoreState>()(
     persist(
         (set, get) => ({
             user: null,
+            workspaces: [],
+            activeWorkspace: null,
             references: [],
             knowledge: [],
             chatMessages: [],
@@ -94,6 +140,7 @@ export const useStore = create<StoreState>()(
             clearChatMessages: () => set({ chatMessages: [] }),
 
             login: async (email) => {
+                // 1. Find or create account (user)
                 let { data: account } = await supabase
                     .from('accounts')
                     .select('*')
@@ -110,95 +157,221 @@ export const useStore = create<StoreState>()(
                     account = newAccount;
                 }
 
-                if (account) {
-                    const { data: refsData } = await supabase
-                        .from('market_references')
+                if (!account) return;
+
+                // 2. Load user's workspaces via workspace_members
+                const { data: memberships } = await supabase
+                    .from('workspace_members')
+                    .select('workspace_id, role, workspaces(*)')
+                    .eq('user_id', account.id);
+
+                let workspaces: Workspace[] = [];
+
+                if (memberships && memberships.length > 0) {
+                    workspaces = memberships.map((m: any) => {
+                        const ws = m.workspaces;
+                        return {
+                            id: ws.id,
+                            name: ws.name,
+                            slug: ws.slug || '',
+                            logoUrl: ws.logo_url || '',
+                            plan: ws.plan || 'free',
+                            ownTiktok: ws.own_tiktok || '',
+                            ownInstagram: ws.own_instagram || '',
+                            ownSocialData: ws.own_social_data || {},
+                            niche: ws.niche || '',
+                            role: m.role,
+                        };
+                    });
+                } else {
+                    // No workspaces yet — create one automatically (first-time user or pre-migration)
+                    const slug = account.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'workspace';
+                    const { data: newWs } = await supabase
+                        .from('workspaces')
+                        .insert([{
+                            name: account.name || 'Mi Workspace',
+                            slug,
+                            owner_id: account.id,
+                            own_tiktok: account.own_tiktok || '',
+                            own_instagram: account.own_instagram || '',
+                            own_social_data: account.own_social_data || {},
+                            niche: account.niche || '',
+                        }])
                         .select('*')
-                        .eq('account_id', account.id);
+                        .single();
 
-                    const { data: knowledgeData } = await supabase
-                        .from('knowledge_entries')
-                        .select('*')
-                        .eq('account_id', account.id)
-                        .order('created_at', { ascending: false });
+                    if (newWs) {
+                        await supabase.from('workspace_members').insert([{
+                            workspace_id: newWs.id,
+                            user_id: account.id,
+                            role: 'owner',
+                        }]);
 
-                    // Load previously scraped TikTok videos
-                    let ownSocialData = account.own_social_data || {};
-                    try {
-                        const { data: scrapedVideos } = await supabase
-                            .from('scraped_videos')
-                            .select('*')
-                            .eq('account_id', account.id)
-                            .eq('platform', 'tiktok')
-                            .order('views', { ascending: false });
+                        workspaces = [{
+                            id: newWs.id,
+                            name: newWs.name,
+                            slug: newWs.slug || '',
+                            logoUrl: '',
+                            plan: 'free',
+                            ownTiktok: newWs.own_tiktok || '',
+                            ownInstagram: newWs.own_instagram || '',
+                            ownSocialData: newWs.own_social_data || {},
+                            niche: newWs.niche || '',
+                            role: 'owner',
+                        }];
+                    }
+                }
 
-                        if (scrapedVideos && scrapedVideos.length > 0) {
-                            ownSocialData = {
-                                ...ownSocialData,
-                                tiktokPostsList: scrapedVideos.map((v: any) => ({
-                                    id: v.video_id,
-                                    caption: v.caption || '',
-                                    likes: v.likes || 0,
-                                    comments: v.comments || 0,
-                                    views: v.views || 0,
-                                    url: v.url || '',
-                                    thumbnail: v.thumbnail || '',
-                                    platform: 'tiktok' as const,
-                                    timestamp: v.timestamp,
-                                    isVideo: true,
-                                })),
-                            };
-                            console.log(`[Login] Loaded ${scrapedVideos.length} scraped TikTok videos`);
-                        }
-                    } catch (e) {
-                        console.log('No scraped videos table yet or error:', e);
+                // 3. Select active workspace (first one, or previously saved)
+                const savedWsId = localStorage.getItem('hooklab-active-workspace');
+                const activeWs = workspaces.find(w => w.id === savedWsId) || workspaces[0] || null;
+
+                // 4. Load workspace data
+                let references: Reference[] = [];
+                let knowledge: KnowledgeEntry[] = [];
+                let ownSocialData: OwnSocialData = activeWs?.ownSocialData || {};
+
+                if (activeWs) {
+                    const wsData = await loadWorkspaceData(activeWs.id);
+                    references = wsData.references;
+                    knowledge = wsData.knowledge;
+
+                    if (wsData.scrapedVideos.length > 0) {
+                        ownSocialData = {
+                            ...ownSocialData,
+                            tiktokPostsList: wsData.scrapedVideos.map((v: any) => ({
+                                id: v.video_id, caption: v.caption || '',
+                                likes: v.likes || 0, comments: v.comments || 0, views: v.views || 0,
+                                url: v.url || '', thumbnail: v.thumbnail || '',
+                                platform: 'tiktok' as const, timestamp: v.timestamp, isVideo: true,
+                            })),
+                        };
                     }
 
-                    set({
-                        user: {
-                            id: account.id,
-                            name: account.name,
-                            email: account.email || '',
-                            niche: account.niche,
-                            ownTiktok: account.own_tiktok || '',
-                            ownInstagram: account.own_instagram || '',
-                            ownSocialData,
-                        },
-                        references: refsData?.map(r => ({
-                            id: r.id, refName: r.ref_name || '', name: r.name, url: r.url,
-                            platform: r.platform, views: r.views,
-                            thumbnail: r.thumbnail, author: r.author,
-                            followers: r.followers, likes: r.likes,
-                            videoCount: r.video_count, isProfile: r.is_profile
-                        })) || [],
-                        knowledge: knowledgeData?.map(k => ({
-                            id: k.id, title: k.title, content: k.content, createdAt: k.created_at
-                        })) || []
-                    });
+                    localStorage.setItem('hooklab-active-workspace', activeWs.id);
                 }
+
+                set({
+                    user: {
+                        id: account.id,
+                        name: account.name,
+                        email: account.email || '',
+                        niche: activeWs?.niche || account.niche || '',
+                        ownTiktok: activeWs?.ownTiktok || account.own_tiktok || '',
+                        ownInstagram: activeWs?.ownInstagram || account.own_instagram || '',
+                        ownSocialData,
+                    },
+                    workspaces,
+                    activeWorkspace: activeWs,
+                    references,
+                    knowledge,
+                });
+
+                console.log(`[Login] ${account.email} → ${workspaces.length} workspace(s), active: ${activeWs?.name}`);
             },
 
-            logout: () => set({ user: null, references: [], knowledge: [], chatMessages: [] }),
+            logout: () => {
+                localStorage.removeItem('hooklab-active-workspace');
+                set({ user: null, workspaces: [], activeWorkspace: null, references: [], knowledge: [], chatMessages: [] });
+            },
+
+            // ─── NEW: Switch workspace ───
+            switchWorkspace: async (workspaceId: string) => {
+                const { workspaces } = get();
+                const ws = workspaces.find(w => w.id === workspaceId);
+                if (!ws) return;
+
+                const wsData = await loadWorkspaceData(ws.id);
+                let ownSocialData: OwnSocialData = ws.ownSocialData || {};
+
+                if (wsData.scrapedVideos.length > 0) {
+                    ownSocialData = {
+                        ...ownSocialData,
+                        tiktokPostsList: wsData.scrapedVideos.map((v: any) => ({
+                            id: v.video_id, caption: v.caption || '',
+                            likes: v.likes || 0, comments: v.comments || 0, views: v.views || 0,
+                            url: v.url || '', thumbnail: v.thumbnail || '',
+                            platform: 'tiktok' as const, timestamp: v.timestamp, isVideo: true,
+                        })),
+                    };
+                }
+
+                localStorage.setItem('hooklab-active-workspace', ws.id);
+
+                set((state) => ({
+                    activeWorkspace: ws,
+                    references: wsData.references,
+                    knowledge: wsData.knowledge,
+                    chatMessages: [],  // Clear chat on workspace switch
+                    user: state.user ? {
+                        ...state.user,
+                        niche: ws.niche,
+                        ownTiktok: ws.ownTiktok,
+                        ownInstagram: ws.ownInstagram,
+                        ownSocialData,
+                    } : null,
+                }));
+
+                console.log(`[Workspace] Switched to: ${ws.name}`);
+            },
+
+            // ─── NEW: Create workspace ───
+            createWorkspace: async (name: string, niche?: string) => {
+                const userId = get().user?.id;
+                if (!userId) return null;
+
+                const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+                const { data: ws } = await supabase
+                    .from('workspaces')
+                    .insert([{ name, slug, owner_id: userId, niche: niche || '' }])
+                    .select('*')
+                    .single();
+
+                if (!ws) return null;
+
+                await supabase.from('workspace_members').insert([{
+                    workspace_id: ws.id,
+                    user_id: userId,
+                    role: 'owner',
+                }]);
+
+                const newWs: Workspace = {
+                    id: ws.id, name: ws.name, slug: ws.slug || '',
+                    logoUrl: '', plan: 'free',
+                    ownTiktok: '', ownInstagram: '',
+                    ownSocialData: {}, niche: ws.niche || '', role: 'owner',
+                };
+
+                set((state) => ({ workspaces: [...state.workspaces, newWs] }));
+                console.log(`[Workspace] Created: ${name}`);
+                return newWs;
+            },
 
             updateOwnSocials: async (tiktok, instagram) => {
                 const userId = get().user?.id;
+                const wsId = get().activeWorkspace?.id;
                 if (!userId) return;
 
-                // Save usernames to DB
+                // Save to workspace if available, fall back to account
+                if (wsId) {
+                    await supabase
+                        .from('workspaces')
+                        .update({ own_tiktok: tiktok, own_instagram: instagram })
+                        .eq('id', wsId);
+                }
                 await supabase
                     .from('accounts')
                     .update({ own_tiktok: tiktok, own_instagram: instagram })
                     .eq('id', userId);
 
-                // Start with existing data so errors don't wipe previous results
                 const existingData = get().user?.ownSocialData || {};
                 let ownSocialData: OwnSocialData = { ...existingData };
 
-                // ===== TIKTOK: Use scrape mission system =====
+                // ===== TIKTOK =====
                 if (tiktok.trim()) {
                     const username = tiktok.replace('@', '').trim();
 
-                    // Try to get TikTok profile stats via extract-url (quick, sometimes works)
                     try {
                         const controller = new AbortController();
                         const timeout = setTimeout(() => controller.abort(), 8000);
@@ -216,92 +389,60 @@ export const useStore = create<StoreState>()(
                             ownSocialData.tiktokVideos = data.videoCount || ownSocialData.tiktokVideos || 0;
                             ownSocialData.tiktokNickname = data.title || username;
                         }
-                    } catch (e) {
-                        console.log('TikTok profile stats fetch skipped (timeout)');
-                    }
+                    } catch (e) { console.log('TikTok profile stats fetch skipped'); }
 
-                    // Create scrape mission for TikTok individual videos
                     try {
                         const missionRes = await fetch('/api/scrape-mission', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ accountId: userId, username, platform: 'tiktok' }),
+                            body: JSON.stringify({ accountId: userId, workspaceId: wsId, username, platform: 'tiktok' }),
                         });
                         const missionData = await missionRes.json();
                         const missionId = missionData.missionId;
 
                         if (missionId) {
-                            console.log(`[TikTok] Scrape mission created: ${missionId}`);
-
-                            // Poll for mission completion (max 60s)
+                            console.log(`[TikTok] Scrape mission: ${missionId}`);
                             const maxWait = 60000;
-                            const pollInterval = 3000;
                             const startTime = Date.now();
 
                             while (Date.now() - startTime < maxWait) {
-                                await new Promise(resolve => setTimeout(resolve, pollInterval));
-
+                                await new Promise(resolve => setTimeout(resolve, 3000));
                                 const statusRes = await fetch(`/api/scrape-mission?missionId=${missionId}`);
                                 const statusData = await statusRes.json();
 
                                 if (statusData.mission?.status === 'completed') {
-                                    console.log(`[TikTok] Mission completed! ${statusData.videos?.length || 0} videos`);
                                     ownSocialData.tiktokPostsList = statusData.videos || [];
-                                    if (statusData.videos?.length > 0) {
-                                        ownSocialData.tiktokVideos = statusData.videos.length;
-                                    }
+                                    if (statusData.videos?.length > 0) ownSocialData.tiktokVideos = statusData.videos.length;
                                     break;
-                                } else if (statusData.mission?.status === 'failed') {
-                                    console.error('[TikTok] Mission failed:', statusData.mission?.error);
-                                    break;
-                                }
-                                // Still running, continue polling
-                                console.log(`[TikTok] Mission status: ${statusData.mission?.status}...`);
+                                } else if (statusData.mission?.status === 'failed') break;
                             }
                         }
-                    } catch (e) {
-                        console.error('TikTok scrape mission error:', e);
-                    }
+                    } catch (e) { console.error('TikTok scrape error:', e); }
 
-                    // Fallback: load existing scraped videos from DB if mission didn't return any
                     if (!ownSocialData.tiktokPostsList?.length) {
                         try {
                             const { data: videos } = await supabase
-                                .from('scraped_videos')
-                                .select('*')
-                                .eq('account_id', userId)
-                                .eq('platform', 'tiktok')
-                                .order('views', { ascending: false });
-
+                                .from('scraped_videos').select('*')
+                                .eq(wsId ? 'workspace_id' : 'account_id', wsId || userId)
+                                .eq('platform', 'tiktok').order('views', { ascending: false });
                             if (videos && videos.length > 0) {
                                 ownSocialData.tiktokPostsList = videos.map((v: any) => ({
-                                    id: v.video_id,
-                                    caption: v.caption || '',
-                                    likes: v.likes || 0,
-                                    comments: v.comments || 0,
-                                    views: v.views || 0,
-                                    url: v.url || '',
-                                    thumbnail: v.thumbnail || '',
-                                    platform: 'tiktok' as const,
-                                    timestamp: v.timestamp,
-                                    isVideo: true,
+                                    id: v.video_id, caption: v.caption || '', likes: v.likes || 0,
+                                    comments: v.comments || 0, views: v.views || 0, url: v.url || '',
+                                    thumbnail: v.thumbnail || '', platform: 'tiktok' as const,
+                                    timestamp: v.timestamp, isVideo: true,
                                 }));
-                                console.log(`[TikTok] Loaded ${videos.length} previously scraped videos from DB`);
                             }
-                        } catch (e) {
-                            console.error('Failed to load scraped videos:', e);
-                        }
+                        } catch (e) { console.error('Failed to load scraped videos:', e); }
                     }
                 }
 
-                // ===== INSTAGRAM: Use fetch-own-data API (works reliably) =====
+                // ===== INSTAGRAM =====
                 if (instagram.trim()) {
                     try {
                         const username = instagram.replace('@', '').trim();
-                        // Get profile stats
                         const res = await fetch('/api/extract-url', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ url: `https://www.instagram.com/${username}` }),
                         });
                         const data = await res.json();
@@ -309,49 +450,41 @@ export const useStore = create<StoreState>()(
                             ownSocialData.instagramFollowers = data.followers || 0;
                             ownSocialData.instagramPosts = data.videoCount || 0;
                         }
-                    } catch (e) {
-                        console.error('Failed to fetch own Instagram data:', e);
-                    }
+                    } catch (e) { console.error('Instagram stats error:', e); }
 
-                    // Get individual posts
                     try {
                         const postsRes = await fetch('/api/fetch-own-data', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ instagram: instagram.trim() }),
                         });
                         const postsData = await postsRes.json();
                         if (postsData.success && postsData.instagramPosts?.length > 0) {
                             ownSocialData.instagramPostsList = postsData.instagramPosts;
                         }
-                    } catch (e) {
-                        console.error('Failed to fetch Instagram posts:', e);
-                    }
+                    } catch (e) { console.error('Instagram posts error:', e); }
                 }
 
-                // Save social data to DB
-                await supabase
-                    .from('accounts')
-                    .update({ own_social_data: ownSocialData })
-                    .eq('id', userId);
+                // Save social data
+                if (wsId) {
+                    await supabase.from('workspaces').update({ own_social_data: ownSocialData }).eq('id', wsId);
+                }
+                await supabase.from('accounts').update({ own_social_data: ownSocialData }).eq('id', userId);
 
                 set((state) => ({
-                    user: state.user ? {
-                        ...state.user,
-                        ownTiktok: tiktok,
-                        ownInstagram: instagram,
-                        ownSocialData
-                    } : null
+                    user: state.user ? { ...state.user, ownTiktok: tiktok, ownInstagram: instagram, ownSocialData } : null,
+                    activeWorkspace: state.activeWorkspace ? { ...state.activeWorkspace, ownTiktok: tiktok, ownInstagram: instagram, ownSocialData } : null,
                 }));
             },
 
             addReference: async (ref) => {
                 const userId = get().user?.id;
+                const wsId = get().activeWorkspace?.id;
                 if (!userId) return;
                 const { data } = await supabase
                     .from('market_references')
                     .insert([{
-                        account_id: userId, ref_name: ref.refName, name: ref.name, url: ref.url,
+                        account_id: userId, workspace_id: wsId || userId,
+                        ref_name: ref.refName, name: ref.name, url: ref.url,
                         platform: ref.platform, views: ref.views,
                         thumbnail: ref.thumbnail, author: ref.author,
                         followers: ref.followers || 0, likes: ref.likes || 0,
@@ -375,16 +508,13 @@ export const useStore = create<StoreState>()(
             addReferenceFromUrl: async (url: string, refName: string) => {
                 try {
                     const response = await fetch('/api/extract-url', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url }),
                     });
                     const data = await response.json();
                     if (data.error) throw new Error(data.error);
-
                     await get().addReference({
-                        refName, url,
-                        name: data.title, platform: data.platform, views: data.views,
+                        refName, url, name: data.title, platform: data.platform, views: data.views,
                         thumbnail: data.thumbnail, author: data.author,
                         followers: data.followers, likes: data.likes,
                         videoCount: data.videoCount, isProfile: data.isProfile,
@@ -393,8 +523,7 @@ export const useStore = create<StoreState>()(
                     console.error('Failed to extract URL:', error);
                     const platform = url.includes('youtube') || url.includes('youtu.be') ? 'youtube' as const
                         : url.includes('tiktok') ? 'tiktok' as const
-                            : url.includes('instagram') ? 'instagram' as const
-                                : 'other' as const;
+                            : url.includes('instagram') ? 'instagram' as const : 'other' as const;
                     await get().addReference({ refName, url, name: new URL(url).hostname, platform, views: 0 });
                 }
             },
@@ -409,34 +538,29 @@ export const useStore = create<StoreState>()(
                 if (!ref) return;
                 try {
                     const response = await fetch('/api/extract-url', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: ref.url }),
                     });
                     const data = await response.json();
                     if (data.error) return;
-
-                    await supabase
-                        .from('market_references')
+                    await supabase.from('market_references')
                         .update({ views: data.views, name: data.title, followers: data.followers || 0, likes: data.likes || 0 })
                         .eq('id', id);
-
                     set((state) => ({
                         references: state.references.map(r =>
                             r.id === id ? { ...r, views: data.views, name: data.title, followers: data.followers, likes: data.likes } : r
                         )
                     }));
-                } catch (error) {
-                    console.error('Failed to refresh views:', error);
-                }
+                } catch (error) { console.error('Failed to refresh views:', error); }
             },
 
             addKnowledge: async (entry) => {
                 const userId = get().user?.id;
+                const wsId = get().activeWorkspace?.id;
                 if (!userId) return;
                 const { data } = await supabase
                     .from('knowledge_entries')
-                    .insert([{ account_id: userId, title: entry.title, content: entry.content }])
+                    .insert([{ account_id: userId, workspace_id: wsId || userId, title: entry.title, content: entry.content }])
                     .select('*')
                     .single();
                 if (data) {

@@ -9,7 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // GET:  Check mission status + get results
 export async function POST(req: Request) {
     try {
-        const { accountId, username, platform = 'tiktok', missionType = 'scrape_videos' } = await req.json();
+        const { accountId, workspaceId, username, platform = 'tiktok', missionType = 'scrape_videos' } = await req.json();
 
         if (!accountId || !username) {
             return NextResponse.json({ error: 'accountId and username are required' }, { status: 400 });
@@ -40,6 +40,7 @@ export async function POST(req: Request) {
             .from('scrape_missions')
             .insert([{
                 account_id: accountId,
+                workspace_id: workspaceId || accountId,
                 username: username.replace('@', '').trim(),
                 platform,
                 status: 'pending',

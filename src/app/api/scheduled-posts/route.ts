@@ -10,6 +10,7 @@ const supabase = createClient(
 export async function POST(req: Request) {
     const {
         accountId,
+        workspaceId,
         caption,
         platforms,
         mediaUrls,
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
             .from("scheduled_posts")
             .insert({
                 account_id: accountId,
+                workspace_id: workspaceId || accountId,
                 caption,
                 platforms: platforms || ["instagram"],
                 media_urls: mediaUrls || [],
