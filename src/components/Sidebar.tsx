@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LogOut, Menu, X, Brain, CalendarDays, FlaskConical, Bell, Palette, MessageSquare, Hexagon, BookOpen, ChevronDown, Plus, Check, Layers, Settings } from "lucide-react";
+import { Home, LogOut, Menu, X, Brain, CalendarDays, FlaskConical, Bell, Palette, MessageSquare, Hexagon, BookOpen, ChevronDown, Plus, Check, Layers, Settings, BarChart3, Table2 } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { useState, useEffect, useRef } from "react";
 
@@ -12,6 +12,8 @@ const navigation = [
     { name: "Studio", href: "/dashboard/studio", icon: Palette, beta: true },
     { name: "Tools", href: "/dashboard/tools", icon: FlaskConical, beta: true },
     { name: "Calendar", href: "/dashboard/calendar", icon: CalendarDays, beta: true },
+    { name: "Content Stats", href: "/dashboard/stats", icon: BarChart3 },
+    { name: "Content Tracker", href: "/dashboard/tracker", icon: Table2 },
     { name: "AI Script Chat", href: "/dashboard/chat", icon: MessageSquare },
     { name: "Guide", href: "/dashboard/guide", icon: BookOpen },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },

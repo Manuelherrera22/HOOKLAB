@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useStore } from "@/store/useStore";
 import {
     Instagram, Plus, Trash2, ExternalLink, RefreshCw, Loader2,
     Users, Heart, Film, BookOpen, Save, Link2, X, TrendingUp,
-    Video, Calendar, Globe, Check, Sparkles, Target, BarChart3
+    Video, Calendar, Globe, Check, Sparkles, Target, BarChart3,
+    Upload, FileText
 } from "lucide-react";
 
 export default function DashboardOverview() {
@@ -37,6 +38,8 @@ export default function DashboardOverview() {
     const [knowledgeTitle, setKnowledgeTitle] = useState('');
     const [knowledgeContent, setKnowledgeContent] = useState('');
     const [addingKnowledge, setAddingKnowledge] = useState(false);
+    const [uploadingDocument, setUploadingDocument] = useState(false);
+    const knowledgeFileRef = useRef<HTMLInputElement>(null);
 
     const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
@@ -96,6 +99,32 @@ export default function DashboardOverview() {
             setShowKnowledgeForm(false);
         } finally {
             setAddingKnowledge(false);
+        }
+    };
+
+    // ─── Knowledge document upload ───
+    const handleKnowledgeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingDocument(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch('/api/knowledge-upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                setKnowledgeTitle(data.title || file.name);
+                setKnowledgeContent(data.content || '');
+                setShowKnowledgeForm(true);
+            } else {
+                alert('Error processing file: ' + (data.error || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Knowledge upload error:', err);
+            alert('Failed to upload document');
+        } finally {
+            setUploadingDocument(false);
+            if (knowledgeFileRef.current) knowledgeFileRef.current.value = '';
         }
     };
 
@@ -346,13 +375,30 @@ export default function DashboardOverview() {
                         <BookOpen className="w-5 h-5 text-neutral-400" />
                         <span>Knowledge Base</span>
                     </h2>
-                    <button
-                        onClick={() => setShowKnowledgeForm(!showKnowledgeForm)}
-                        className="flex items-center space-x-1.5 px-3 py-2 bg-white text-black rounded-xl text-sm font-medium hover:bg-neutral-200 transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>Add Knowledge</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <input
+                            ref={knowledgeFileRef}
+                            type="file"
+                            accept=".txt,.pdf,.csv,.json,.md,.docx"
+                            onChange={handleKnowledgeFileUpload}
+                            className="hidden"
+                        />
+                        <button
+                            onClick={() => knowledgeFileRef.current?.click()}
+                            disabled={uploadingDocument}
+                            className="flex items-center space-x-1.5 px-3 py-2 bg-white/5 border border-white/10 text-neutral-300 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors disabled:opacity-50"
+                        >
+                            {uploadingDocument ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                            <span>{uploadingDocument ? 'Processing...' : 'Upload Doc'}</span>
+                        </button>
+                        <button
+                            onClick={() => setShowKnowledgeForm(!showKnowledgeForm)}
+                            className="flex items-center space-x-1.5 px-3 py-2 bg-white text-black rounded-xl text-sm font-medium hover:bg-neutral-200 transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Add Knowledge</span>
+                        </button>
+                    </div>
                 </div>
                 <p className="text-sm text-neutral-500 mb-5">Add business context, structure details, and market data so the AI has deeper understanding of your business.</p>
 

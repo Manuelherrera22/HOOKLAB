@@ -19,12 +19,14 @@ export default function ChatPage() {
     const user = useStore(state => state.user);
     const references = useStore(state => state.references);
     const knowledge = useStore(state => state.knowledge);
+    const activeWorkspace = useStore(state => state.activeWorkspace);
     const storedMessages = useStore(state => state.chatMessages);
     const setChatMessages = useStore(state => state.setChatMessages);
     const clearChatMessages = useStore(state => state.clearChatMessages);
     const [selectedRefs, setSelectedRefs] = useState<string[]>(references.map(r => r.id));
     const chatEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // File attachments state
     const [attachments, setAttachments] = useState<FileAttachment[]>([]);
@@ -60,6 +62,7 @@ export default function ChatPage() {
             data: {
                 accountName: user?.name,
                 accountId: user?.id,
+                workspaceId: activeWorkspace?.id || '',
                 references: activeReferences,
                 knowledge: knowledge,
                 ownSocials: {
@@ -93,6 +96,17 @@ export default function ChatPage() {
             }, 500);
         }
     }, [searchParams, append]);
+
+    // Auto-clear chat when workspace changes
+    const prevWorkspaceId = useRef(activeWorkspace?.id);
+    useEffect(() => {
+        if (prevWorkspaceId.current && activeWorkspace?.id && prevWorkspaceId.current !== activeWorkspace?.id) {
+            clearChatMessages();
+            setMessages([welcomeMessage]);
+            setAttachments([]);
+        }
+        prevWorkspaceId.current = activeWorkspace?.id;
+    }, [activeWorkspace?.id]);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -213,6 +227,10 @@ export default function ChatPage() {
         if (!textContent && attachments.length === 0) return;
 
         setIsSending(true);
+        // Reset textarea height after send
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+        }
 
         try {
             // If we have attachments, process them
@@ -238,7 +256,7 @@ export default function ChatPage() {
                             });
                             const transcribeData = await transcribeRes.json();
                             if (transcribeData.text) {
-                                fileSummaries.push(`🎙️ Audio transcrito: "${transcribeData.text}"`);
+                                fileSummaries.push(`🎙️ Transcripción del audio:\n"${transcribeData.text}"`);
                             } else {
                                 fileSummaries.push(`🎙️ Audio adjunto: ${att.name} (no se pudo transcribir)`);
                             }
@@ -257,9 +275,9 @@ export default function ChatPage() {
                     }
                 }
 
-                // Build the full message
+                // Build the full message — always include user's typed prompt separately
                 let fullMessage = '';
-                if (textContent) fullMessage += textContent + '\n\n';
+                if (textContent) fullMessage += `📝 Prompt: ${textContent}\n\n`;
                 if (fileSummaries.length > 0) fullMessage += fileSummaries.join('\n\n');
 
                 // If we have images, send them to the image analysis endpoint
@@ -440,7 +458,9 @@ export default function ChatPage() {
                                                 {msg.content.split('\n').filter(line =>
                                                     !line.startsWith('📷 Imagen') &&
                                                     !line.startsWith('🎙️ Audio transcrito') &&
+                                                    !line.startsWith('🎙️ Transcripción') &&
                                                     !line.startsWith('🎙️ Audio adjunto') &&
+                                                    !line.startsWith('📝 Prompt:') &&
                                                     !line.startsWith('📄 Documento')
                                                 ).join('\n').trim() || msg.content}
                                             </p>
@@ -507,7 +527,7 @@ export default function ChatPage() {
 
             {/* Input */}
             <div className="shrink-0">
-                <form onSubmit={handleSendWithFiles} className="flex items-center space-x-2 bg-neutral-900 border border-neutral-800 rounded-2xl px-3 py-3">
+                <form onSubmit={handleSendWithFiles} className="flex items-end space-x-2 bg-neutral-900 border border-neutral-800 rounded-2xl px-3 py-3">
                     {/* File Upload Button */}
                     <input
                         ref={fileInputRef}
@@ -521,7 +541,7 @@ export default function ChatPage() {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         title="Adjuntar archivo"
-                        className="p-2 text-neutral-500 hover:text-blue-400 rounded-xl hover:bg-neutral-800 transition-colors shrink-0"
+                        className="p-2 text-neutral-500 hover:text-blue-400 rounded-xl hover:bg-neutral-800 transition-colors shrink-0 mb-0.5"
                     >
                         <Paperclip className="w-4 h-4" />
                     </button>
@@ -531,19 +551,32 @@ export default function ChatPage() {
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
                         title={isRecording ? "Detener grabación" : "Grabar audio"}
-                        className={`p-2 rounded-xl transition-colors shrink-0 ${isRecording ? 'text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'text-neutral-500 hover:text-purple-400 hover:bg-neutral-800'}`}
+                        className={`p-2 rounded-xl transition-colors shrink-0 mb-0.5 ${isRecording ? 'text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'text-neutral-500 hover:text-purple-400 hover:bg-neutral-800'}`}
                     >
                         {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                     </button>
 
-                    {/* Text Input */}
-                    <input
+                    {/* Text Input — textarea for multiline (Shift+Enter = newline, Enter = send) */}
+                    <textarea
+                        ref={textareaRef}
                         value={input}
                         onChange={handleInputChange}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendWithFiles(e as any);
+                            }
+                        }}
+                        onInput={(e) => {
+                            const target = e.target as HTMLTextAreaElement;
+                            target.style.height = 'auto';
+                            target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+                        }}
+                        rows={1}
                         placeholder={attachments.length > 0
                             ? `${attachments.length} archivo(s) adjunto(s) — agrega un mensaje o envía directamente`
                             : "Describe the hook or script you want to create (e.g. 'Hook de curiosidad para forex')"}
-                        className="flex-1 bg-transparent text-white placeholder-neutral-500 focus:outline-none text-sm min-w-0"
+                        className="flex-1 bg-transparent text-white placeholder-neutral-500 focus:outline-none text-sm min-w-0 resize-none max-h-[120px] leading-5 py-2"
                     />
 
                     {/* Clear Chat Button */}
