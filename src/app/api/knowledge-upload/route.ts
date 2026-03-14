@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
             try {
                 const buffer = Buffer.from(await file.arrayBuffer());
                 // Dynamic import to avoid build errors if pdf-parse is not installed
-                const pdfParse = (await import('pdf-parse')).default;
-                const pdfData = await pdfParse(buffer);
+                const pdfParse = (await import('pdf-parse' as any)) as any;
+                const pdfData = await (pdfParse.default || pdfParse)(buffer);
                 extractedText = pdfData.text || '';
                 if (pdfData.info?.Title) {
                     title = pdfData.info.Title;
