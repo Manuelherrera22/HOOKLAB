@@ -278,8 +278,28 @@ export const useStore = create<StoreState>()(
             // ─── NEW: Switch workspace ───
             switchWorkspace: async (workspaceId: string) => {
                 const { workspaces } = get();
-                const ws = workspaces.find(w => w.id === workspaceId);
-                if (!ws) return;
+                const cachedWs = workspaces.find(w => w.id === workspaceId);
+                if (!cachedWs) return;
+
+                // IMPORTANT: Refetch fresh workspace data from DB (cached data may be stale)
+                const { data: freshWsRow } = await supabase
+                    .from('workspaces')
+                    .select('*')
+                    .eq('id', workspaceId)
+                    .single();
+
+                const ws: Workspace = freshWsRow ? {
+                    id: freshWsRow.id,
+                    name: freshWsRow.name,
+                    slug: freshWsRow.slug || '',
+                    logoUrl: freshWsRow.logo_url || '',
+                    plan: freshWsRow.plan || 'free',
+                    ownTiktok: freshWsRow.own_tiktok || '',
+                    ownInstagram: freshWsRow.own_instagram || '',
+                    ownSocialData: freshWsRow.own_social_data || {},
+                    niche: freshWsRow.niche || '',
+                    role: cachedWs.role,
+                } : cachedWs;
 
                 const wsData = await loadWorkspaceData(ws.id);
                 let ownSocialData: OwnSocialData = ws.ownSocialData || {};
@@ -298,8 +318,12 @@ export const useStore = create<StoreState>()(
 
                 localStorage.setItem('hooklab-active-workspace', ws.id);
 
+                // Update the cached workspace in the workspaces array too
+                const updatedWorkspaces = workspaces.map(w => w.id === ws.id ? ws : w);
+
                 set((state) => ({
                     activeWorkspace: ws,
+                    workspaces: updatedWorkspaces,
                     references: wsData.references,
                     knowledge: wsData.knowledge,
                     chatMessages: [],  // Clear chat on workspace switch
@@ -312,7 +336,7 @@ export const useStore = create<StoreState>()(
                     } : null,
                 }));
 
-                console.log(`[Workspace] Switched to: ${ws.name}`);
+                console.log(`[Workspace] Switched to: ${ws.name} (tiktok: ${ws.ownTiktok}, ig: ${ws.ownInstagram})`);
             },
 
             // ─── NEW: Create workspace ───
@@ -344,7 +368,11 @@ export const useStore = create<StoreState>()(
                 };
 
                 set((state) => ({ workspaces: [...state.workspaces, newWs] }));
-                console.log(`[Workspace] Created: ${name}`);
+
+                // Auto-switch to the new workspace
+                await get().switchWorkspace(newWs.id);
+
+                console.log(`[Workspace] Created & switched to: ${name}`);
                 return newWs;
             },
 

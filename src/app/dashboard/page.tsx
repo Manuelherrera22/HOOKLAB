@@ -52,16 +52,25 @@ export default function DashboardOverview() {
 
     // ─ Social accounts from workspace_social_accounts table ─
     const [socialAccounts, setSocialAccounts] = useState<{ id: string; platform: string; username: string; is_primary: boolean; profile_data: any }[]>([]);
+    const activeWorkspace = useStore(state => state.activeWorkspace);
+
+    // Sync ownTiktok/ownInstagram when workspace changes
+    useEffect(() => {
+        setOwnTiktok(user?.ownTiktok || '');
+        setOwnInstagram(user?.ownInstagram || '');
+    }, [user?.ownTiktok, user?.ownInstagram]);
 
     useEffect(() => {
-        const ws = useStore.getState().activeWorkspace;
-        if (ws?.id) {
-            fetch(`/api/workspace/social-accounts?workspaceId=${ws.id}`)
+        const wsId = activeWorkspace?.id;
+        if (wsId) {
+            fetch(`/api/workspace/social-accounts?workspaceId=${wsId}`)
                 .then(r => r.json())
                 .then(j => setSocialAccounts(j.accounts || []))
                 .catch(() => { });
+        } else {
+            setSocialAccounts([]);
         }
-    }, []);
+    }, [activeWorkspace?.id]);
 
     const connectedAccounts = socialAccounts.length;
 
